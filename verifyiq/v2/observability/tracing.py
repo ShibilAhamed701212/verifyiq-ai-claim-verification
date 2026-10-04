@@ -1,7 +1,6 @@
 import json
 import time
 from pathlib import Path
-from typing import Optional
 
 from verifyiq.v2.models.decision import V2Decision
 

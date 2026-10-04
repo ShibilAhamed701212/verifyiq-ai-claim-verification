@@ -3,7 +3,7 @@ Output schema and enum validation with consistency checks.
 """
 
 import logging
-from typing import Any, Dict, Set
+from typing import Any
 
 from config import Config
 
@@ -33,7 +33,7 @@ class OutputValidator:
     def __init__(self, config: Config):
         self.config = config
 
-    def validate(self, row: Dict[str, Any]) -> Dict[str, str]:
+    def validate(self, row: dict[str, Any]) -> dict[str, str]:
         cleaned = {field: str(row.get(field, "")) for field in self.FIELDNAMES}
 
         if cleaned["claim_object"] not in self.config.ALLOWED_OBJECT_PARTS:
@@ -64,7 +64,7 @@ class OutputValidator:
 
         return self._consistency_check(cleaned)
 
-    def _consistency_check(self, row: Dict[str, str]) -> Dict[str, str]:
+    def _consistency_check(self, row: dict[str, str]) -> dict[str, str]:
         status = row.get("claim_status", "")
         issue_type = row.get("issue_type", "")
         flags = self._parse_flags(row.get("risk_flags", ""))
@@ -99,5 +99,5 @@ class OutputValidator:
             pass
         return row
 
-    def _parse_flags(self, raw: str) -> Set[str]:
+    def _parse_flags(self, raw: str) -> set[str]:
         return {f.strip() for f in raw.split(";") if f.strip() and f.strip() != "none"}

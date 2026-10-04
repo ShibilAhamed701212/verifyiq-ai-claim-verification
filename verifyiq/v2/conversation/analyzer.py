@@ -1,9 +1,11 @@
 import re
-from verifyiq.v2.models.conversation import ConversationReport, ConversationAnomaly
+
+from verifyiq.v2.models.conversation import ConversationAnomaly, ConversationReport
+
 
 class ConversationAnalyzer:
     """Detects contradictions, negation, retractions, uncertainty, sarcasm, changing claims."""
-    
+
     NEGATION_WORDS = {"no", "not", "never", "don't", "doesn't", "didn't", "won't", "can't", "couldn't", "shouldn't", "isn't", "aren't", "wasn't", "weren't", "haven't", "hasn't", "hadn't"}
     UNCERTAINTY_WORDS = {"maybe", "perhaps", "possibly", "probably", "might", "could be", "not sure", "i think", "i believe", "seems like", "looks like", "approximately", "roughly", "about"}
     RETRACTION_PATTERNS = [
@@ -23,14 +25,14 @@ class ConversationAnalyzer:
         "great", "awesome", "fantastic", "wonderful", "brilliant", "perfect",
         "amazing", "incredible", "excellent", "love it", "just great",
     }
-    
+
     def analyze(self, claim_text: str) -> ConversationReport:
         report = ConversationReport()
         if not claim_text:
             return report
-        
+
         text_lower = claim_text.lower()
-        
+
         # Negation detection
         words = text_lower.split()
         negation_phrases = [w for w in words if w in self.NEGATION_WORDS]
@@ -41,7 +43,7 @@ class ConversationAnalyzer:
                 description=f"Negation detected: {', '.join(negation_phrases[:3])}",
                 severity="medium",
             ))
-        
+
         # Uncertainty detection
         uncertainty_hits = [p for p in self.UNCERTAINTY_WORDS if p in text_lower]
         if uncertainty_hits:
@@ -51,7 +53,7 @@ class ConversationAnalyzer:
                 description=f"Uncertain language: {', '.join(uncertainty_hits[:3])}",
                 severity="medium",
             ))
-        
+
         # Retraction detection
         for pattern in self.RETRACTION_PATTERNS:
             match = re.search(pattern, text_lower)
@@ -64,7 +66,7 @@ class ConversationAnalyzer:
                     span=(match.start(), match.end()),
                 ))
                 break
-        
+
         # Sarcasm detection
         sarasam_hits = [w for w in self.SARASM_INDICATORS if w in text_lower]
         if sarasam_hits:
@@ -74,7 +76,7 @@ class ConversationAnalyzer:
                 description=f"Possible sarcasm: '{', '.join(sarasam_hits[:3])}'",
                 severity="low",
             ))
-        
+
         # Contradiction detection: look for "A but not A" patterns
         damage_claim_pattern = r"(dent|scratch|crack|shatter|break|tear|water|stain|crush)"
         claims_found = set(re.findall(damage_claim_pattern, text_lower))
@@ -83,7 +85,7 @@ class ConversationAnalyzer:
             neg_pattern = rf"(no |not |never |didn't |isn't |wasn't ){claim}"
             if re.search(neg_pattern, text_lower):
                 negated_claims.add(claim)
-        
+
         if claims_found and negated_claims and not (claims_found - negated_claims):
             report.has_contradictions = True
             report.anomalies.append(ConversationAnomaly(
@@ -91,7 +93,7 @@ class ConversationAnalyzer:
                 description=f"Claimed {', '.join(claims_found)} then negated all",
                 severity="high",
             ))
-        
+
         # Changing claims: multiple different damage types mentioned
         if len(claims_found) > 1:
             report.has_changing_claims = True
@@ -100,7 +102,7 @@ class ConversationAnalyzer:
                 description=f"Multiple damage types: {', '.join(claims_found)}",
                 severity="medium",
             ))
-        
+
         # Build risk flags
         if report.has_retraction:
             report.risk_flags.append("claim_retraction")
@@ -110,5 +112,5 @@ class ConversationAnalyzer:
             report.risk_flags.append("uncertain_claim")
         if report.has_sarcasm:
             report.risk_flags.append("possible_sarcasm")
-        
+
         return report

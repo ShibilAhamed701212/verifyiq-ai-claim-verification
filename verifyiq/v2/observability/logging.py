@@ -4,9 +4,8 @@ import json
 import logging
 import sys
 from contextvars import ContextVar
-from typing import Optional
 
-request_id: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 
 class StructuredLogAdapter(logging.LoggerAdapter):

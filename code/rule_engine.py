@@ -5,7 +5,7 @@ This component compares parsed claim facts against visual observations. It does
 not inspect files or call models, which keeps every decision path explainable.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 
 class RuleEngine:
@@ -17,10 +17,10 @@ class RuleEngine:
 
     def evaluate(
         self,
-        parser_result: Dict[str, str],
-        vision_result: Dict[str, Any],
-        evidence_result: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        parser_result: dict[str, str],
+        vision_result: dict[str, Any],
+        evidence_result: dict[str, Any],
+    ) -> dict[str, Any]:
         claimed_damage_type = parser_result.get("claimed_damage_type", "unknown")
         claimed_object_part = parser_result.get("claimed_object_part", "unknown")
         visible_damage_type = self._normalize(vision_result.get("damage_type"), "unknown")

@@ -6,8 +6,9 @@ rule engines with multi-modal VLM analysis for accurate, explainable decisions.
 """
 
 import sys as _sys
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 from pathlib import Path as _Path
-from importlib.metadata import PackageNotFoundError, version as _version
 
 # V1 code is frozen at code/ and uses bare imports (``from config import
 # Config``). Put code/ on sys.path and import V1 modules by their bare names.

@@ -4,8 +4,7 @@ import enum
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 from verifyiq.v2.models.decision import V2Decision
 
@@ -25,9 +24,9 @@ class ReviewItem:
     user_id: str
     decision: V2Decision
     status: ReviewStatus = ReviewStatus.PENDING
-    reviewed_by: Optional[str] = None
-    reviewer_notes: Optional[str] = None
-    reviewed_at: Optional[float] = None
+    reviewed_by: str | None = None
+    reviewer_notes: str | None = None
+    reviewed_at: float | None = None
 
 
 class ReviewQueue:
@@ -60,7 +59,7 @@ class ReviewQueue:
             return [it for it in self._items.values() if it.status == status]
 
     def review(self, review_id: str, status: ReviewStatus, reviewer: str,
-               notes: Optional[str] = None) -> bool:
+               notes: str | None = None) -> bool:
         with self._lock:
             if review_id not in self._items:
                 return False

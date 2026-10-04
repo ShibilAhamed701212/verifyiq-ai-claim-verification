@@ -5,7 +5,7 @@ This is the only component that produces the final output row returned to
 `main.py` and ultimately written to `output.csv`.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from output_validator import OutputValidator
 from severity_engine import SeverityEngine
@@ -20,13 +20,13 @@ class DecisionAgent:
 
     def build_output_row(
         self,
-        claim_row: Dict[str, str],
-        parser_result: Dict[str, str],
-        vision_result: Dict[str, Any],
-        evidence_result: Dict[str, Any],
-        rule_result: Dict[str, Any],
-        risk_result: List[str],
-    ) -> Dict[str, str]:
+        claim_row: dict[str, str],
+        parser_result: dict[str, str],
+        vision_result: dict[str, Any],
+        evidence_result: dict[str, Any],
+        rule_result: dict[str, Any],
+        risk_result: list[str],
+    ) -> dict[str, str]:
         risk_flags = risk_result
         risk_flags = self._merge_flags(risk_flags, rule_result, vision_result)
 
@@ -57,7 +57,7 @@ class DecisionAgent:
         }
         return self.validator.validate(row)
 
-    def fallback_output(self, claim_row: Dict[str, str], error_message: str) -> Dict[str, str]:
+    def fallback_output(self, claim_row: dict[str, str], error_message: str) -> dict[str, str]:
         return self.validator.validate({
             "user_id": claim_row.get("user_id", "unknown"),
             "image_paths": claim_row.get("image_paths", ""),
@@ -77,10 +77,10 @@ class DecisionAgent:
 
     def _merge_flags(
         self,
-        risk_flags: List[str],
-        rule_result: Dict[str, Any],
-        vision_result: Dict[str, Any],
-    ) -> List[str]:
+        risk_flags: list[str],
+        rule_result: dict[str, Any],
+        vision_result: dict[str, Any],
+    ) -> list[str]:
         internal = {"evidence_insufficient", "low_confidence", "object_part_mismatch"}
         flags = {flag for flag in risk_flags if flag and flag != "none" and flag not in internal}
 
@@ -94,11 +94,11 @@ class DecisionAgent:
 
     def _reasoning_trace(
         self,
-        parser_result: Dict[str, str],
-        vision_result: Dict[str, Any],
-        evidence_result: Dict[str, Any],
-        rule_result: Dict[str, Any],
-        risk_flags: List[str],
+        parser_result: dict[str, str],
+        vision_result: dict[str, Any],
+        evidence_result: dict[str, Any],
+        rule_result: dict[str, Any],
+        risk_flags: list[str],
     ) -> str:
         supporting = vision_result.get("supporting_images", [])
         supporting_text = ", ".join(supporting) if supporting else "none"

@@ -3,9 +3,6 @@
 import json
 import sqlite3
 import threading
-from datetime import datetime, timezone
-from typing import Optional
-
 from code.v2.models.decision import V2Decision
 
 
@@ -111,7 +108,7 @@ class ClaimStore:
             self._conn.commit()
             return cur.lastrowid
 
-    def get_claim(self, claim_id: int) -> Optional[dict]:
+    def get_claim(self, claim_id: int) -> dict | None:
         with self._lock:
             cur = self._conn.cursor()
             cur.execute("SELECT * FROM claims WHERE id = ?", (claim_id,))
@@ -129,7 +126,7 @@ class ClaimStore:
             )
             return [dict(row) for row in cur.fetchall()]
 
-    def get_fraud_events(self, claim_id: Optional[int] = None) -> list[dict]:
+    def get_fraud_events(self, claim_id: int | None = None) -> list[dict]:
         with self._lock:
             cur = self._conn.cursor()
             if claim_id is not None:

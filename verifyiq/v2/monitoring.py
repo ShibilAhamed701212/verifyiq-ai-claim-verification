@@ -3,8 +3,7 @@
 import os
 import threading
 import time
-from typing import Callable, Optional
-
+from collections.abc import Callable
 
 # ── Health Checker ─────────────────────────────────────────────────────────
 
@@ -84,7 +83,7 @@ class Heartbeat:
 
     def __init__(self, interval: float = 30.0):
         self._interval = interval
-        self._timer: Optional[threading.Timer] = None
+        self._timer: threading.Timer | None = None
         self._latest: list[dict] = []
         self._running = False
         self._lock = threading.Lock()

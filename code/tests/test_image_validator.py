@@ -1,7 +1,8 @@
 """Tests for image_validator."""
 
 from pathlib import Path
-from image_validator import validate_images, any_valid_images, all_images_valid
+
+from image_validator import all_images_valid, any_valid_images, validate_images
 
 
 class TestImageValidator:

@@ -1,5 +1,5 @@
-from verifyiq.v2.models.observation import ObservationReport
 from verifyiq.v2.models.consensus import ConsensusReport, ModelDisagreement
+from verifyiq.v2.models.observation import ObservationReport
 
 
 class ConsensusEngine:

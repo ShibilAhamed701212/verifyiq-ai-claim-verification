@@ -65,7 +65,7 @@ class TestReviewQueue:
 
     def test_get_by_status(self):
         rid1 = self.queue.add("dent", [], "car", "u1", V2Decision())
-        rid2 = self.queue.add("scratch", [], "car", "u1", V2Decision())
+        self.queue.add("scratch", [], "car", "u1", V2Decision())
         self.queue.review(rid1, ReviewStatus.APPROVED, "rev1")
         approved = self.queue.get_by_status(ReviewStatus.APPROVED)
         pending = self.queue.get_by_status(ReviewStatus.PENDING)

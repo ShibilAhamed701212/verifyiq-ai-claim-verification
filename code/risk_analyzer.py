@@ -3,7 +3,8 @@ Risk flag and severity analysis.
 """
 
 from pathlib import Path
-from typing import List, Dict, Any, Set, Optional
+from typing import Any
+
 from config import Config
 from utils import normalize_text
 
@@ -22,8 +23,8 @@ class RiskAnalyzer:
             return
         from cv.blur_detector import BlurDetector
         from cv.crop_detector import CropDetector
-        from cv.text_detector import TextDetector
         from cv.object_validator import ObjectValidator
+        from cv.text_detector import TextDetector
         self._blur_detector = BlurDetector()
         self._crop_detector = CropDetector()
         self._text_detector = TextDetector()
@@ -31,15 +32,15 @@ class RiskAnalyzer:
 
     def analyze(
         self,
-        image_analysis: Dict[str, Any],
-        user_history: Optional[Dict[str, Any]],
+        image_analysis: dict[str, Any],
+        user_history: dict[str, Any] | None,
         claim_object: str,
         user_claim: str,
-        evidence_result: Optional[Dict[str, Any]] = None,
-        rule_result: Optional[Dict[str, Any]] = None,
-        image_paths: Optional[List[Path]] = None,
-    ) -> List[str]:
-        risk_flags: Set[str] = set()
+        evidence_result: dict[str, Any] | None = None,
+        rule_result: dict[str, Any] | None = None,
+        image_paths: list[Path] | None = None,
+    ) -> list[str]:
+        risk_flags: set[str] = set()
         evidence_result = evidence_result or {}
         rule_result = rule_result or {}
 
@@ -117,7 +118,6 @@ class RiskAnalyzer:
             # Blur detection overrides Gemini is_clear
             blur_results = self._blur_detector.has_blurry_images(image_paths_list)
             any_blurry = any(r["is_blurry"] for r in blur_results)
-            all_clear = all(not r["is_blurry"] for r in blur_results)
             if any_blurry:
                 risk_flags.add("blurry_image")
             # Do NOT remove vision-based flags — CV only adds signals

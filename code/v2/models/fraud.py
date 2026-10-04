@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -16,7 +15,7 @@ class ImageFraudResult:
 @dataclass
 class MetadataFraudResult:
     has_exif: bool = False
-    editing_software: Optional[str] = None
+    editing_software: str | None = None
     has_editing: bool = False
     timestamp_mismatch: bool = False
     camera_mismatch: list[str] = field(default_factory=list)

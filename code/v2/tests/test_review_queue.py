@@ -1,8 +1,10 @@
 """Tests for ReviewQueue — Phase 12"""
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from code.v2.review_queue import ReviewQueue, ReviewStatus, ReviewItem
 from code.v2.models.decision import V2Decision
+from code.v2.review_queue import ReviewItem, ReviewQueue, ReviewStatus
 
 
 class TestReviewStatus:
@@ -65,7 +67,7 @@ class TestReviewQueue:
 
     def test_get_by_status(self):
         rid1 = self.queue.add("dent", [], "car", "u1", V2Decision())
-        rid2 = self.queue.add("scratch", [], "car", "u1", V2Decision())
+        self.queue.add("scratch", [], "car", "u1", V2Decision())
         self.queue.review(rid1, ReviewStatus.APPROVED, "rev1")
         approved = self.queue.get_by_status(ReviewStatus.APPROVED)
         pending = self.queue.get_by_status(ReviewStatus.PENDING)

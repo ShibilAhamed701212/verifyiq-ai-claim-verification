@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 from PIL import Image
 
@@ -12,7 +12,7 @@ MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
 
 
-def validate_images(image_paths: List[Path]) -> List[Dict[str, Any]]:
+def validate_images(image_paths: list[Path]) -> list[dict[str, Any]]:
     results = []
     for p in image_paths:
         result = {"image_path": str(p), "valid": True, "errors": []}
@@ -50,9 +50,9 @@ def validate_images(image_paths: List[Path]) -> List[Dict[str, Any]]:
     return results
 
 
-def any_valid_images(results: List[Dict[str, Any]]) -> bool:
+def any_valid_images(results: list[dict[str, Any]]) -> bool:
     return any(r["valid"] for r in results)
 
 
-def all_images_valid(results: List[Dict[str, Any]]) -> bool:
+def all_images_valid(results: list[dict[str, Any]]) -> bool:
     return bool(results) and all(r["valid"] for r in results)

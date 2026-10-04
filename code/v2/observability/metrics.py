@@ -1,16 +1,14 @@
-import math
-import time
 import threading
-from collections import defaultdict
+import time
 from dataclasses import dataclass, field
-from typing import Optional
+
 
 @dataclass
 class ModuleTiming:
     module: str
     latency_ms: float
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 @dataclass
 class PipelineMetrics:
@@ -20,32 +18,32 @@ class PipelineMetrics:
     cache_hits: int = 0
     cache_misses: int = 0
     fraud_detections: int = 0
-    routing: Optional[str] = None
+    routing: str | None = None
 
 class MetricsCollector:
     def __init__(self):
         self._lock = threading.Lock()
         self._timings: list[ModuleTiming] = []
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
         self._fraud_detections: int = 0
-        self._request_id: Optional[str] = None
+        self._request_id: str | None = None
         self._request_counter: int = 0
         self._failure_counter: int = 0
         self._latencies: list[float] = []
 
     @property
-    def request_id(self) -> Optional[str]:
+    def request_id(self) -> str | None:
         return self._request_id
 
     @request_id.setter
-    def request_id(self, value: Optional[str]):
+    def request_id(self, value: str | None):
         self._request_id = value
 
     def start(self):
         with self._lock:
             self._start_time = time.time()
 
-    def record(self, module: str, latency_ms: float, success: bool = True, error: Optional[str] = None):
+    def record(self, module: str, latency_ms: float, success: bool = True, error: str | None = None):
         with self._lock:
             self._timings.append(ModuleTiming(module, latency_ms, success, error))
 

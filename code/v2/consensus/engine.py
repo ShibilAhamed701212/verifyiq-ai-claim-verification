@@ -1,5 +1,5 @@
-from code.v2.models.observation import ObservationReport
 from code.v2.models.consensus import ConsensusReport, ModelDisagreement
+from code.v2.models.observation import ObservationReport
 
 
 class ConsensusEngine:

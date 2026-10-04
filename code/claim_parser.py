@@ -6,7 +6,6 @@ using normalization, keyword matching, and simple regex-friendly phrase checks.
 """
 
 import re
-from typing import Dict
 
 from config import Config
 from utils import normalize_text
@@ -18,7 +17,7 @@ class ClaimParser:
     def __init__(self, config: Config):
         self.config = config
 
-    def parse(self, user_claim: str, claim_object: str) -> Dict[str, str]:
+    def parse(self, user_claim: str, claim_object: str) -> dict[str, str]:
         claim_text = user_claim or ""
         customer_text = self._filter_customer_text(claim_text)
         text = normalize_text(customer_text)

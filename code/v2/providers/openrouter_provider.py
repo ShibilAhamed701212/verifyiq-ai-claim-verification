@@ -1,6 +1,5 @@
-from typing import Optional
+from code.v2.models.observation import Observation, ObservationReport
 from code.v2.providers.base import VisionProvider
-from code.v2.models.observation import ObservationReport, Observation
 
 
 class OpenRouterProvider(VisionProvider):
@@ -8,7 +7,7 @@ class OpenRouterProvider(VisionProvider):
 
     PROVIDER_NAME = "openrouter"
 
-    def __init__(self, model_name: str = "qwen/qwen2.5-vl-72b-instruct", config: Optional[dict] = None):
+    def __init__(self, model_name: str = "qwen/qwen2.5-vl-72b-instruct", config: dict | None = None):
         super().__init__(model_name, config)
 
     def _check_availability(self) -> bool:

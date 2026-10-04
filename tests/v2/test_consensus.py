@@ -14,7 +14,7 @@ class TestConsensusEngine:
         assert result.agreement_score == 0.0
         assert result.confidence == 0.0
         assert result.uncertainty == 1.0
-        assert result.unanimous == False
+        assert result.unanimous is False
     
     def test_single_observation(self):
         obs = Observation(model_name="gemini", provider="gemini", success=True, assessments=[
@@ -22,7 +22,7 @@ class TestConsensusEngine:
         ])
         report = ObservationReport(observations=[obs], all_failed=False)
         result = self.engine.evaluate(report)
-        assert result.unanimous == True
+        assert result.unanimous is True
         assert result.agreement_score == 1.0
         assert result.confidence == 0.85
     
@@ -35,7 +35,7 @@ class TestConsensusEngine:
         ])
         report = ObservationReport(observations=[obs1, obs2], all_failed=False)
         result = self.engine.evaluate(report)
-        assert result.unanimous == True
+        assert result.unanimous is True
         assert result.agreement_score == 1.0
     
     def test_disagreement(self):
@@ -47,7 +47,7 @@ class TestConsensusEngine:
         ])
         report = ObservationReport(observations=[obs1, obs2], all_failed=False)
         result = self.engine.evaluate(report)
-        assert result.unanimous == False
+        assert result.unanimous is False
         assert result.agreement_score < 1.0
         assert len(result.disagreements) > 0
     

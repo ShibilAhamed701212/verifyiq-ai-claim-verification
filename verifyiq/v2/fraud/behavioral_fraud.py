@@ -12,7 +12,7 @@ class BehavioralFraudDetector:
     def load_history(self, csv_path: str):
         import csv
         try:
-            with open(csv_path, "r") as f:
+            with open(csv_path) as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     uid = row.get("user_id", "")

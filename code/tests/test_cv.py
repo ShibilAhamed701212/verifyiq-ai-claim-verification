@@ -1,14 +1,16 @@
 """Tests for deterministic CV modules."""
-import sys, unittest, tempfile, os
+import sys
+import tempfile
+import unittest
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
-from PIL import Image
 from cv.blur_detector import BlurDetector
 from cv.crop_detector import CropDetector
-from cv.text_detector import TextDetector
 from cv.object_validator import ObjectValidator
+from PIL import Image
 
 
 def _make_test_image(size, color=(200, 200, 200), noise=0):

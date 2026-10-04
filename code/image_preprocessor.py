@@ -9,18 +9,17 @@ BMP, and any other format PIL can open.
 import logging
 import tempfile
 from pathlib import Path
-from typing import List
 
 from PIL import Image
 
 logger = logging.getLogger("evidence_review.preprocessor")
 
-_cleanup_dirs: List[Path] = []
+_cleanup_dirs: list[Path] = []
 
 
-def normalize_images(image_paths: List[Path]) -> List[Path]:
+def normalize_images(image_paths: list[Path]) -> list[Path]:
     """Convert non-JPEG images to JPEG. Returns paths (original or converted)."""
-    out: List[Path] = []
+    out: list[Path] = []
     temp_dir = None
 
     for p in image_paths:

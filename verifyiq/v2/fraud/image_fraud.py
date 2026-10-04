@@ -1,5 +1,4 @@
 import hashlib
-from typing import Optional
 
 from verifyiq.v2.models.fraud import ImageFraudResult
 
@@ -7,11 +6,11 @@ from verifyiq.v2.models.fraud import ImageFraudResult
 class ImageFraudDetector:
     """Detects duplicate images, screenshots, and photo-of-photo."""
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         self.cache_dir = cache_dir
         self._hash_cache: dict[str, str] = {}
 
-    def _sha256(self, path: str) -> Optional[str]:
+    def _sha256(self, path: str) -> str | None:
         try:
             with open(path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()

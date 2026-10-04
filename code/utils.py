@@ -2,12 +2,11 @@
 Utility functions for file I/O, logging, and general helpers.
 """
 
+import csv
 import logging
+import re
 import sys
 from pathlib import Path
-from typing import List, Optional
-import csv
-import re
 
 
 def setup_logging(level=logging.INFO) -> logging.Logger:
@@ -30,7 +29,7 @@ def ensure_output_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def parse_image_paths(image_paths_str: str, base_dir: Path) -> List[Path]:
+def parse_image_paths(image_paths_str: str, base_dir: Path) -> list[Path]:
     if not image_paths_str or image_paths_str.strip() == "":
         return []
 
@@ -50,9 +49,9 @@ def get_image_id_from_path(path: Path) -> str:
     return path.stem
 
 
-def safe_csv_read(csv_path: Path) -> List[dict]:
+def safe_csv_read(csv_path: Path) -> list[dict]:
     rows = []
-    with open(csv_path, "r", encoding="utf-8-sig") as f:
+    with open(csv_path, encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
             if all(v == "" for v in row.values()):

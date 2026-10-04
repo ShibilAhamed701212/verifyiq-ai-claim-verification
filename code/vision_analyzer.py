@@ -11,12 +11,11 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List
-
-from google import genai
-from google.genai import types
+from typing import Any
 
 from config import Config
+from google import genai
+from google.genai import types
 from utils import get_image_id_from_path
 
 logger = logging.getLogger("evidence_review.vision")
@@ -43,7 +42,7 @@ class GeminiVisionClient:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Gemini cache enabled at {self.cache_dir}")
 
-    def _cache_key(self, image_paths: List[Path], user_claim: str, claim_object: str) -> str:
+    def _cache_key(self, image_paths: list[Path], user_claim: str, claim_object: str) -> str:
         import hashlib
         parts = [str(p.resolve()) for p in sorted(image_paths, key=lambda x: str(x))]
         parts.append(user_claim[:200])
@@ -52,7 +51,7 @@ class GeminiVisionClient:
         raw = "|".join(parts)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:32]
 
-    def _cache_load(self, key: str) -> Dict[str, Any]:
+    def _cache_load(self, key: str) -> dict[str, Any]:
         if self.cache_dir is None:
             return None
         path = self.cache_dir / f"{key}.json"
@@ -66,7 +65,7 @@ class GeminiVisionClient:
             logger.warning(f"Cache read failed for {key}: {e}")
         return None
 
-    def _cache_save(self, key: str, analysis: Dict[str, Any]) -> None:
+    def _cache_save(self, key: str, analysis: dict[str, Any]) -> None:
         if self.cache_dir is None:
             return
         path = self.cache_dir / f"{key}.json"
@@ -77,11 +76,11 @@ class GeminiVisionClient:
 
     def analyze_images(
         self,
-        image_paths: List[Path],
+        image_paths: list[Path],
         user_claim: str,
         claim_object: str,
-        object_parts: List[str],
-    ) -> Dict[str, Any]:
+        object_parts: list[str],
+    ) -> dict[str, Any]:
         if self.client is None:
             return self._empty_analysis("Gemini client not available (no API key).")
         if not image_paths:
@@ -138,7 +137,7 @@ class GeminiVisionClient:
 
         return self._empty_analysis("API rate limit exceeded after retries")
 
-    def _parse_response(self, response, image_paths: List[Path]) -> Dict[str, Any]:
+    def _parse_response(self, response, image_paths: list[Path]) -> dict[str, Any]:
         text = response.text if hasattr(response, "text") and response.text else ""
         if not text:
             return self._empty_analysis("Empty response from Gemini")
@@ -157,7 +156,7 @@ class GeminiVisionClient:
 
         return self._normalize_analysis(analysis, image_paths)
 
-    def _normalize_analysis(self, analysis: Dict[str, Any], image_paths: List[Path]) -> Dict[str, Any]:
+    def _normalize_analysis(self, analysis: dict[str, Any], image_paths: list[Path]) -> dict[str, Any]:
         image_ids = [get_image_id_from_path(p) for p in image_paths]
         raw = analysis.get("per_image_assessments", analysis.get("image_assessments", []))
         raw = raw if isinstance(raw, list) else []
@@ -204,7 +203,7 @@ class GeminiVisionClient:
         aggregate["supporting_image_ids"] = aggregate["supporting_images"]
         return aggregate
 
-    def _aggregate(self, analysis: Dict[str, Any], assessments: List[Dict[str, Any]], image_ids: List[str]) -> Dict[str, Any]:
+    def _aggregate(self, analysis: dict[str, Any], assessments: list[dict[str, Any]], image_ids: list[str]) -> dict[str, Any]:
         clear_damage = [
             a for a in assessments
             if a["damage_visible"] and a["is_clear"] and a["angle_sufficient"]
@@ -236,8 +235,8 @@ class GeminiVisionClient:
             "conflicting_images": self._has_conflicts(assessments),
         }
 
-    def _majority(self, assessments: List[Dict[str, Any]], field: str) -> str:
-        counts: Dict[str, int] = {}
+    def _majority(self, assessments: list[dict[str, Any]], field: str) -> str:
+        counts: dict[str, int] = {}
         for assessment in assessments:
             value = self._enum(assessment.get(field), "unknown")
             if value != "unknown":
@@ -246,7 +245,7 @@ class GeminiVisionClient:
             return "unknown"
         return sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
 
-    def _aggregate_quality(self, assessments: List[Dict[str, Any]]) -> str:
+    def _aggregate_quality(self, assessments: list[dict[str, Any]]) -> str:
         if not assessments:
             return "unknown"
         strong = sum(1 for a in assessments if a["is_clear"] and a["angle_sufficient"] and a["lighting_adequate"])
@@ -256,7 +255,7 @@ class GeminiVisionClient:
             return "adequate"
         return "poor"
 
-    def _has_conflicts(self, assessments: List[Dict[str, Any]]) -> bool:
+    def _has_conflicts(self, assessments: list[dict[str, Any]]) -> bool:
         damage = {a["damage_type"] for a in assessments if a["damage_visible"] and a["damage_type"] != "unknown"}
         parts = {a["object_part"] for a in assessments if a["damage_visible"] and a["object_part"] != "unknown"}
         return len(damage) > 1 or len(parts) > 1
@@ -295,7 +294,7 @@ class GeminiVisionClient:
         except (TypeError, ValueError):
             return 0.0
 
-    def _empty_analysis(self, reason: str) -> Dict[str, Any]:
+    def _empty_analysis(self, reason: str) -> dict[str, Any]:
         return {
             "damage_visible": False,
             "damage_type": "unknown",
@@ -326,11 +325,11 @@ class GeminiVisionClient:
 
 
 def analyze_images(
-    image_paths: List[Path],
+    image_paths: list[Path],
     user_claim: str,
     claim_object: str,
     config: Config,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     client = GeminiVisionClient(config)
     object_parts = list(config.ALLOWED_OBJECT_PARTS.get(claim_object, ["unknown"]))
     return client.analyze_images(image_paths, user_claim, claim_object, object_parts)

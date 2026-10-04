@@ -1,9 +1,10 @@
 import re
 from pathlib import Path
 
+
 class InputSanitizer:
     """Sanitizes inputs against prompt injection, path traversal, CSV injection."""
-    
+
     @staticmethod
     def sanitize_claim_text(text: str) -> str:
         """Wrap user claim text with instruction boundaries to prevent prompt injection."""
@@ -28,7 +29,7 @@ class InputSanitizer:
         for pattern in injection_patterns:
             sanitized = re.sub(pattern, "[REDACTED]", sanitized, flags=re.IGNORECASE)
         return sanitized
-    
+
     @staticmethod
     def sanitize_image_path(path: str, base_dir: str) -> str:
         """Prevent path traversal outside allowed directory."""
@@ -36,14 +37,14 @@ class InputSanitizer:
             # Null byte check
             if "\x00" in path or "\x00" in base_dir:
                 return ""
-            
+
             # Explicit path traversal pattern checks (cross-platform)
             if re.search(r"(?:^|[\\/])\.\.[\\/]|(?:^|[\\/])\.\.$", path):
                 return ""
-            
+
             base = Path(base_dir).resolve()
             target = (base / path).resolve()
-            
+
             # Symlink-aware check: ensure normalized target is within base.
             # A plain string-prefix test would accept sibling directories
             # such as "<base>-other/...", so compare path components.
@@ -52,7 +53,7 @@ class InputSanitizer:
             return str(target)
         except Exception:
             return ""
-    
+
     @staticmethod
     def sanitize_csv_field(value: str) -> str:
         """Prevent CSV injection (formula execution in Excel/Calc)."""
@@ -66,7 +67,7 @@ class InputSanitizer:
         if "\t" in value:
             return "'" + value
         return value
-    
+
     @staticmethod
     def sanitize_filename(name: str) -> str:
         """Remove dangerous characters from filenames."""

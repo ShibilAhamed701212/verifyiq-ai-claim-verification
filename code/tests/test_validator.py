@@ -1,6 +1,5 @@
 """Tests for output_validator consistency checks."""
 
-from pathlib import Path
 from config import Config
 from output_validator import OutputValidator
 

@@ -277,9 +277,9 @@ pytest tests                # package tests: tests/v1 (60) + tests/v2 (86, incl.
 
 Verified passing on Python 3.10, 3.11 and 3.12 during the audit. The tests need no API key.
 
-CI (`.github/workflows/tests.yml`) runs all three suites on 3.10–3.12. The `lint` workflow runs
-`ruff check`, which currently reports about 780 style findings (mostly line length, whitespace
-and annotation style), so it fails; those were left as-is to avoid a cosmetic rewrite.
+CI runs all three test suites on 3.10–3.12 (`.github/workflows/tests.yml`) and
+`ruff check verifyiq/ code/` (`.github/workflows/lint.yml`). Ruff's line-length rule (E501) is
+disabled in `pyproject.toml`; long lines are left for a future `ruff format` pass.
 
 ---
 

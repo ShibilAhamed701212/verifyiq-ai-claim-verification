@@ -11,28 +11,35 @@ silent degradation.
 
 import os
 import time
-from typing import Optional
 
 from config import Config
-from verifyiq.v2.models.observation import ObservationReport
-from verifyiq.v2.models.consensus import ConsensusReport
-from verifyiq.v2.models.fraud import FraudReport
-from verifyiq.v2.models.evidence import EvidenceReport
-from verifyiq.v2.models.conversation import ConversationReport
-from verifyiq.v2.models.confidence import ConfidenceReport
-from verifyiq.v2.models.decision import V2Decision
 
-from verifyiq.v2.consensus import ConsensusEngine
-from verifyiq.v2.fraud import ImageFraudDetector, MetadataFraudDetector, BehavioralFraudDetector
-from verifyiq.v2.conversation.analyzer import ConversationAnalyzer
 from verifyiq.v2.confidence.calibrator import ConfidenceCalibrator
-from verifyiq.v2.evidence.recommender import EvidenceRecommender
+from verifyiq.v2.consensus import ConsensusEngine
+from verifyiq.v2.conversation.analyzer import ConversationAnalyzer
 from verifyiq.v2.critic.v2_critic import V2Critic
+from verifyiq.v2.evidence.recommender import EvidenceRecommender
 from verifyiq.v2.explainability.tracer import DecisionTracer
-from verifyiq.v2.observability.metrics import MetricsCollector, get_collector
+from verifyiq.v2.fraud import BehavioralFraudDetector, ImageFraudDetector, MetadataFraudDetector
+from verifyiq.v2.models.confidence import ConfidenceReport
+from verifyiq.v2.models.consensus import ConsensusReport
+from verifyiq.v2.models.conversation import ConversationReport
+from verifyiq.v2.models.decision import V2Decision
+from verifyiq.v2.models.evidence import EvidenceReport
+from verifyiq.v2.models.fraud import FraudReport
+from verifyiq.v2.models.observation import ObservationReport
+from verifyiq.v2.observability.metrics import get_collector
 from verifyiq.v2.security.sanitizer import InputSanitizer
-from verifyiq.v2.v1_adapter import V1RuleAdapter, V1SeverityAdapter, V1EvidenceAdapter, V1ParserAdapter
-from verifyiq.v2.vision_manager import VisionAvailabilityManager, VisionUnavailableError, VisionState, FallbackMode
+from verifyiq.v2.v1_adapter import (
+    V1EvidenceAdapter,
+    V1ParserAdapter,
+    V1RuleAdapter,
+    V1SeverityAdapter,
+)
+from verifyiq.v2.vision_manager import (
+    VisionAvailabilityManager,
+    VisionState,
+)
 
 
 class V2Pipeline:
@@ -42,7 +49,7 @@ class V2Pipeline:
     degraded-but-valid output. No layer crashes the pipeline.
     """
 
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: dict | None = None):
         self.config = config or {}
         self.metrics = get_collector()
 
@@ -96,7 +103,7 @@ class V2Pipeline:
         self.sanitizer = InputSanitizer()
 
     def process(self, claim_text: str, image_paths: list[str], claim_object: str,
-                 user_id: str = "", evidence_requirements: Optional[list[dict]] = None) -> V2Decision:
+                 user_id: str = "", evidence_requirements: list[dict] | None = None) -> V2Decision:
         self.metrics.start()
 
         # Layer 0: Sanitize inputs
@@ -211,8 +218,8 @@ class V2Pipeline:
         )
 
     def _run_evidence(self, observation_report: ObservationReport, claim_text: str,
-                       claim_object: str, evidence_requirements: Optional[list[dict]] = None,
-                       image_paths: Optional[list[str]] = None) -> EvidenceReport:
+                       claim_object: str, evidence_requirements: list[dict] | None = None,
+                       image_paths: list[str] | None = None) -> EvidenceReport:
         start = time.time()
         if not evidence_requirements:
             evidence_requirements = []

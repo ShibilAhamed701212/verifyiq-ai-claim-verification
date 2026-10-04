@@ -1,6 +1,6 @@
-from typing import Optional
+
+from verifyiq.v2.models.observation import Observation, ObservationReport, PerImageAssessment
 from verifyiq.v2.providers.base import VisionProvider
-from verifyiq.v2.models.observation import ObservationReport, Observation, PerImageAssessment
 
 
 class GeminiProvider(VisionProvider):
@@ -8,7 +8,7 @@ class GeminiProvider(VisionProvider):
 
     PROVIDER_NAME = "gemini"
 
-    def __init__(self, model_name: str = "gemini-2.0-flash", config: Optional[dict] = None):
+    def __init__(self, model_name: str = "gemini-2.0-flash", config: dict | None = None):
         super().__init__(model_name, config)
 
     def _check_availability(self) -> bool:
@@ -18,6 +18,7 @@ class GeminiProvider(VisionProvider):
     def analyze(self, image_paths: list[str], claim_text: str, claim_object: str) -> ObservationReport:
         try:
             import os
+
             from google import genai
             api_key = self.config.get("api_key") or os.environ.get("GEMINI_API_KEY")
             if not api_key:

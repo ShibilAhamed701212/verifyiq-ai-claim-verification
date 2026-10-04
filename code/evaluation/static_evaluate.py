@@ -1,6 +1,8 @@
 """Static evaluation using expected values as ideal vision input."""
-import sys, csv, json
+import csv
+import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from claim_parser import ClaimParser
@@ -124,7 +126,7 @@ for row in rows:
     })
 
 print("=" * 70)
-print(f"STATIC EVALUATION (ideal vision + CV modules)")
+print("STATIC EVALUATION (ideal vision + CV modules)")
 print("=" * 70)
 print(f"Correct: {correct}/{len(rows)} ({correct/len(rows)*100:.0f}%)")
 print()

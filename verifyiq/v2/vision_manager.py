@@ -8,12 +8,10 @@ States:
 On UNAVAILABLE, the system must refuse or degrade honestly.
 """
 
-import os
-import time
 import threading
-from dataclasses import dataclass, field
+import time
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class VisionState(Enum):
@@ -37,10 +35,10 @@ class ProviderHealth:
     total_failures: int = 0
     total_calls: int = 0
     circuit_open: bool = False
-    circuit_open_at: Optional[float] = None
+    circuit_open_at: float | None = None
     circuit_cooldown_s: float = 60.0
-    last_error: Optional[str] = None
-    quota_remaining: Optional[int] = None
+    last_error: str | None = None
+    quota_remaining: int | None = None
 
     @property
     def health_score(self) -> float:
@@ -64,7 +62,7 @@ class ProviderHealthTracker:
         for name in self.PROVIDER_PRIORITY:
             self._providers[name] = ProviderHealth(name=name)
 
-    def register_available(self, name: str, quota: Optional[int] = None):
+    def register_available(self, name: str, quota: int | None = None):
         with self._lock:
             p = self._providers.get(name)
             if p:
@@ -94,7 +92,7 @@ class ProviderHealthTracker:
                     p.circuit_open = True
                     p.circuit_open_at = time.time()
 
-    def get_health(self, name: str) -> Optional[ProviderHealth]:
+    def get_health(self, name: str) -> ProviderHealth | None:
         with self._lock:
             return self._providers.get(name)
 
@@ -115,7 +113,7 @@ class ProviderHealthTracker:
                 return False
             return p.available
 
-    def best_available(self) -> Optional[str]:
+    def best_available(self) -> str | None:
         for name in self.PROVIDER_PRIORITY:
             if self.is_available(name):
                 return name
@@ -188,7 +186,7 @@ class VisionAvailabilityManager:
             return False
         return True
 
-    def record_call(self, name: str, latency_ms: float, success: bool, error: Optional[str] = None):
+    def record_call(self, name: str, latency_ms: float, success: bool, error: str | None = None):
         if success:
             self._tracker.record_success(name, latency_ms)
         else:
@@ -209,7 +207,7 @@ class VisionAvailabilityManager:
 
     def ensure_vision(self, image_count: int) -> None:
         """Check if vision is available. Raises VisionUnavailableError if not.
-        
+
         Only checks when images are actually provided — text-only claims
         (image_count == 0) always pass.
         """

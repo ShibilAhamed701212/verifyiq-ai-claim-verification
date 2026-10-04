@@ -4,14 +4,12 @@ V1 is frozen. These adapters are the ONLY bridge between V2 and V1.
 No V1 file may be imported, modified, or monkey-patched by V2.
 """
 
-from pathlib import Path
-from typing import Optional
-
+from code.claim_parser import ClaimParser
 from code.config import Config
+from code.evidence_checker import EvidenceChecker
 from code.rule_engine import RuleEngine
 from code.severity_engine import SeverityEngine
-from code.evidence_checker import EvidenceChecker
-from code.claim_parser import ClaimParser
+from pathlib import Path
 
 
 class V1RuleAdapter:
@@ -51,7 +49,7 @@ class V1SeverityAdapter:
 class V1EvidenceAdapter:
     """Calls V1 EvidenceChecker as a pure function."""
 
-    def __init__(self, csv_path: Optional[Path] = None):
+    def __init__(self, csv_path: Path | None = None):
         self._checker = EvidenceChecker(csv_path or Config().evidence_reqs_path)
 
     def check(self, vision_result: dict, evidence_requirements: list[dict],
@@ -67,7 +65,7 @@ class V1EvidenceAdapter:
 class V1ParserAdapter:
     """Calls V1 ClaimParser as a pure function."""
 
-    def __init__(self, config: Optional[Config] = None):
+    def __init__(self, config: Config | None = None):
         self._parser = ClaimParser(config or Config())
 
     def parse(self, claim_text: str, claim_object: str) -> dict:
@@ -103,7 +101,7 @@ class V1RiskAdapter:
         "text_instruction_present": "text_instruction_present",
     }
 
-    def __init__(self, config: Optional[Config] = None):
+    def __init__(self, config: Config | None = None):
         from code.risk_analyzer import RiskAnalyzer
         self._analyzer = RiskAnalyzer(config or Config())
 
@@ -133,12 +131,12 @@ class V1RiskAdapter:
     def analyze(
         self,
         image_analysis: dict,
-        user_history: Optional[dict],
+        user_history: dict | None,
         claim_object: str,
         user_claim: str,
-        evidence_result: Optional[dict] = None,
-        rule_result: Optional[dict] = None,
-        image_paths: Optional[list] = None,
+        evidence_result: dict | None = None,
+        rule_result: dict | None = None,
+        image_paths: list | None = None,
     ) -> list[str]:
         """Call V1 RiskAnalyzer with the same interface.
 

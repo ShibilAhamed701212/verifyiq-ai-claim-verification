@@ -4,25 +4,24 @@ Runs the system on sample_claims.csv and reports accuracy metrics.
 """
 
 import csv
-import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import read_claims
 from claim_processor import ClaimProcessor
 from config import Config
 from error_analysis import generate_error_report
+from main import read_claims
 from utils import setup_logging
 
 logger = setup_logging()
 
 
-def load_expected_outputs(csv_path: Path) -> Dict[str, Dict]:
+def load_expected_outputs(csv_path: Path) -> dict[str, dict]:
     expected = {}
-    with open(csv_path, "r", encoding="utf-8") as f:
+    with open(csv_path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             key = f"{row.get('user_id', '')}|{row.get('image_paths', '')}"
@@ -38,7 +37,7 @@ COMPATIBLE_ISSUE_TYPES = {
 }
 
 
-def compare_outputs(predicted: Dict, expected: Dict) -> Dict[str, Any]:
+def compare_outputs(predicted: dict, expected: dict) -> dict[str, Any]:
     results = {
         "match": True,
         "differences": [],
@@ -75,7 +74,7 @@ def compare_outputs(predicted: Dict, expected: Dict) -> Dict[str, Any]:
     return results
 
 
-def run_evaluation(config: Config, limit: int = -1) -> Tuple[List[Dict], Dict]:
+def run_evaluation(config: Config, limit: int = -1) -> tuple[list[dict], dict]:
     sample_claims = read_claims(config.sample_claims_path)
     if limit > 0:
         sample_claims = sample_claims[:limit]
@@ -172,7 +171,7 @@ def run_evaluation(config: Config, limit: int = -1) -> Tuple[List[Dict], Dict]:
     return results, summary
 
 
-def print_summary(summary: Dict) -> None:
+def print_summary(summary: dict) -> None:
     print("\n" + "=" * 60)
     print("EVALUATION SUMMARY")
     print("=" * 60)
@@ -186,7 +185,7 @@ def print_summary(summary: Dict) -> None:
     print("=" * 60)
 
 
-def generate_report(results: List[Dict], summary: Dict, output_dir: Path) -> None:
+def generate_report(results: list[dict], summary: dict, output_dir: Path) -> None:
     report_path = output_dir / "evaluation_report.md"
     output_dir.mkdir(parents=True, exist_ok=True)
 
