@@ -32,10 +32,14 @@ keywords = [
 dependencies = [
     "Pillow>=10.0.0",
     "tqdm>=4.65.0",
+    "numpy>=1.24.0",
+    "opencv-python-headless>=4.8.0",
 ]
 
 [project.optional-dependencies]
-v1 = []
+v1 = [
+    "google-genai>=1.0.0",
+]
 v2 = []
 dev = [
     "pytest>=8.0.0",

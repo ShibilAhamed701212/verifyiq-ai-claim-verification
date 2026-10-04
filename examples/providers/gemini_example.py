@@ -18,7 +18,7 @@ if not os.environ["GEMINI_API_KEY"]:
 
 os.environ["VERIFYIQ_MODE"] = "production"
 
-from code.v2.pipeline import V2Pipeline
+from verifyiq.v2.pipeline import V2Pipeline
 
 pipeline = V2Pipeline(config={
     "providers": {

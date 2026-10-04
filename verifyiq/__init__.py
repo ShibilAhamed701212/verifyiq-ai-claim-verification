@@ -9,7 +9,11 @@ import sys as _sys
 from pathlib import Path as _Path
 from importlib.metadata import PackageNotFoundError, version as _version
 
-# V1 code is frozen at code/ — keep it importable for V2 adapters
+# V1 code is frozen at code/ and uses bare imports (``from config import
+# Config``). Put code/ on sys.path and import V1 modules by their bare names.
+# The ``code`` package name itself is never imported from here: it collides
+# with the standard-library ``code`` module (used by pdb), which must keep
+# resolving to the stdlib.
 _CODE_DIR = str(_Path(__file__).resolve().parent.parent / "code")
 if _CODE_DIR not in _sys.path:
     _sys.path.insert(0, _CODE_DIR)

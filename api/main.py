@@ -69,7 +69,7 @@ _logger = get_logger("api.main")
 def get_pipeline():
     global _pipeline
     if _pipeline is None:
-        from code.v2.pipeline import V2Pipeline
+        from verifyiq.v2.pipeline import V2Pipeline
         _pipeline = V2Pipeline()
     return _pipeline
 
@@ -109,7 +109,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -171,7 +171,10 @@ async def verify_claim(request: ClaimRequest):
         collector._failure_counter += 1
         latency = (time.time() - start) * 1000
         _logger.error("Claim processing failed", extra={"trace_id": trace_id, "error": str(exc)})
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "processing_failed", "trace_id": trace_id},
+        )
 
 
 @app.post("/batch", response_model=BatchResponse)

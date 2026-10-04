@@ -45,3 +45,6 @@ jobs:
 
       - name: Run V2 tests
         run: pytest code/v2/tests/ -v --tb=short
+
+      - name: Run package tests
+        run: pytest tests/ -v --tb=short

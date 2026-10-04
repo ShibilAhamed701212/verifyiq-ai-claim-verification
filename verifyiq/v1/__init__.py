@@ -11,16 +11,16 @@ _CODE_DIR = str(_Path(__file__).resolve().parent.parent.parent / "code")
 if _CODE_DIR not in _sys.path:
     _sys.path.insert(0, _CODE_DIR)
 
-from code.config import Config
-from code.rule_engine import RuleEngine
-from code.severity_engine import SeverityEngine
-from code.evidence_checker import EvidenceChecker
-from code.claim_parser import ClaimParser
-from code.risk_analyzer import RiskAnalyzer
-from code.output_validator import OutputValidator
-from code.decision_agent import DecisionAgent
-from code.image_validator import validate_images, any_valid_images, all_images_valid
-from code.claim_processor import ClaimProcessor
+from config import Config
+from rule_engine import RuleEngine
+from severity_engine import SeverityEngine
+from evidence_checker import EvidenceChecker
+from claim_parser import ClaimParser
+from risk_analyzer import RiskAnalyzer
+from output_validator import OutputValidator
+from decision_agent import DecisionAgent
+from image_validator import validate_images, any_valid_images, all_images_valid
+from claim_processor import ClaimProcessor
 
 __all__ = [
     "Config",

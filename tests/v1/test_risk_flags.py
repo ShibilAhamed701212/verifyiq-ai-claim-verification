@@ -3,7 +3,7 @@
 import sys
 import unittest
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "code"))
 
 from config import Config
 from risk_analyzer import RiskAnalyzer

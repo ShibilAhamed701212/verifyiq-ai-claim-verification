@@ -3,6 +3,10 @@
 Prerequisites:
     pip install verifyiq[api]
     export OPENROUTER_API_KEY="your-openrouter-api-key"
+
+NOTE: OpenRouterProvider is currently a stub. It reports itself available when
+OPENROUTER_API_KEY is set, but analyze() makes no API call and returns no
+observations. See verifyiq/v2/providers/openrouter_provider.py.
 """
 
 import os
@@ -16,7 +20,7 @@ if not os.environ["OPENROUTER_API_KEY"]:
 
 os.environ["VERIFYIQ_MODE"] = "production"
 
-from code.v2.pipeline import V2Pipeline
+from verifyiq.v2.pipeline import V2Pipeline
 
 pipeline = V2Pipeline(config={
     "providers": {

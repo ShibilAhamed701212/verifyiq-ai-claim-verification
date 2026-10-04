@@ -34,7 +34,7 @@ Set `VERIFYIQ_MODE=demo` to run text-only with honest disclaimers:
 ```bash
 export VERIFYIQ_MODE=demo
 python -c "
-from code.v2.pipeline import V2Pipeline
+from verifyiq.v2.pipeline import V2Pipeline
 p = V2Pipeline()
 print(f'Vision state: {p.vision_manager.state.value}')  # 'unavailable'
 print(f'Mode: {p.vision_manager.mode.value}')           # 'demo'
