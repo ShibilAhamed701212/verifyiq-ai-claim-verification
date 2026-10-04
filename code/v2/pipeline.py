@@ -187,7 +187,7 @@ class V2Pipeline:
             from code.claim_parser import ClaimParser
             parser = ClaimParser(Config())
             parsed = parser.parse(claim_text, "")
-            damage_type = parsed.get("damage_type", "")
+            damage_type = parsed.get("claimed_damage_type", "")
         except Exception:
             pass
 

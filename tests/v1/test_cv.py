@@ -1,7 +1,7 @@
 """Tests for deterministic CV modules."""
 import sys, unittest, tempfile, os
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "code"))
 
 import numpy as np
 from PIL import Image

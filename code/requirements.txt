@@ -2,3 +2,6 @@
 google-genai>=1.0.0
 Pillow>=10.0.0
 tqdm>=4.65.0
+# Deterministic CV checks (code/cv/) used by the risk analyzer
+numpy>=1.24.0
+opencv-python-headless>=4.8.0

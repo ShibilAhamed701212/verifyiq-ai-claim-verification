@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def main():
-    from code.v2.pipeline import V2Pipeline
+    from verifyiq.v2.pipeline import V2Pipeline
 
     print("Initializing V2Pipeline (no API keys — will use degraded observation)...")
     pipeline = V2Pipeline({"providers": {}})

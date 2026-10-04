@@ -1,12 +1,25 @@
 """OCR text detector using pytesseract with safe-mode fallback."""
 
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger("evidence_review.text_detector")
 
 _TESSERACT_AVAILABLE: Optional[bool] = None
+_WINDOWS_DEFAULT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+
+def _tesseract_cmd() -> Optional[str]:
+    """Tesseract binary to use: $TESSERACT_CMD, else the Windows default
+    install path if it exists, else None (pytesseract then searches PATH)."""
+    env_cmd = os.environ.get("TESSERACT_CMD")
+    if env_cmd:
+        return env_cmd
+    if Path(_WINDOWS_DEFAULT_CMD).exists():
+        return _WINDOWS_DEFAULT_CMD
+    return None
 
 
 def _check_tesseract() -> bool:
@@ -15,7 +28,9 @@ def _check_tesseract() -> bool:
         return _TESSERACT_AVAILABLE
     try:
         import pytesseract
-        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        cmd = _tesseract_cmd()
+        if cmd:
+            pytesseract.pytesseract.tesseract_cmd = cmd
         pytesseract.get_tesseract_version()
         _TESSERACT_AVAILABLE = True
     except Exception as e:

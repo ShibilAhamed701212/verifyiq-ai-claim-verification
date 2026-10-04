@@ -7,7 +7,7 @@ DATASET_DIR="$(pwd)/dataset"
 OUTPUT_DIR="$(pwd)/output"
 
 echo "==> Building Docker image..."
-docker build -t "$IMAGE" .
+docker build -f docker/Dockerfile -t "$IMAGE" .
 
 echo "==> Stopping and removing existing container (if any)..."
 docker rm -f "$CONTAINER" 2>/dev/null || true
@@ -21,11 +21,11 @@ docker run -d \
   -v "$DATASET_DIR:/app/dataset:ro" \
   -v "$OUTPUT_DIR:/app/output" \
   -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
-  -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
-  -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
   -e OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}" \
   -e LOG_LEVEL="${LOG_LEVEL:-INFO}" \
-  "$IMAGE"
+  -e VERIFYIQ_MODE="${VERIFYIQ_MODE:-production}" \
+  --entrypoint uvicorn \
+  "$IMAGE" api.main:app --host 0.0.0.0 --port 8000
 
 echo "==> Waiting for health check..."
 for i in $(seq 1 12); do
@@ -40,10 +40,3 @@ done
 echo "WARNING: Health check did not pass within 60s. Container may still be starting."
 echo "Check logs: docker logs $CONTAINER"
 
-cleanup() {
-  echo "==> Shutting down container..."
-  docker stop "$CONTAINER" 2>/dev/null || true
-  docker rm "$CONTAINER" 2>/dev/null || true
-  echo "Container stopped and removed."
-}
-trap cleanup EXIT

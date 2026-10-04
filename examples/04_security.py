@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def main():
-    from code.v2.security.sanitizer import InputSanitizer
+    from verifyiq.v2.security.sanitizer import InputSanitizer
 
     sanitizer = InputSanitizer()
 

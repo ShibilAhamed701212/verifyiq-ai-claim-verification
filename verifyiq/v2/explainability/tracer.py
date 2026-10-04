@@ -61,7 +61,9 @@ class DecisionTracer:
         if trace.why_supported:
             lines.append("Supported because: " + "; ".join(trace.why_supported))
         if trace.why_contradicted:
-            lines.append("Contradicted because: " + "; ".join(trace.why_contradicted))
+            label = ("Contradicted because" if decision.claim_status == "contradicted"
+                     else "Not supported because")
+            lines.append(f"{label}: " + "; ".join(trace.why_contradicted))
         lines.append(f"Confidence: {confidence.final_confidence:.2f} ({confidence.routing})")
         if fraud.flags:
             lines.append(f"Fraud flags: {', '.join(fraud.flags)}")

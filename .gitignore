@@ -6,3 +6,8 @@ output.csv
 .DS_Store
 adversarial_evaluation/adversarial_results.csv
 adversarial_evaluation/adversarial_summary.json
+dist/
+build/
+*.egg-info/
+code/evaluation/evaluation_report.md
+code/evaluation/error_report.md

@@ -11,7 +11,7 @@ $OutputDir = Join-Path (Get-Location) "output"
 
 Write-Host "==> Building Docker image..."
 
-docker build -t $Image .
+docker build -f docker/Dockerfile -t $Image .
 
 Write-Host "==> Stopping and removing existing container (if any)..."
 docker rm -f $Container 2>$null
@@ -25,11 +25,11 @@ docker run -d `
     -v "${DatasetDir}:/app/dataset:ro" `
     -v "${OutputDir}:/app/output" `
     -e "GEMINI_API_KEY=$env:GEMINI_API_KEY" `
-    -e "ANTHROPIC_API_KEY=$env:ANTHROPIC_API_KEY" `
-    -e "OPENAI_API_KEY=$env:OPENAI_API_KEY" `
     -e "OPENROUTER_API_KEY=$env:OPENROUTER_API_KEY" `
     -e "LOG_LEVEL=$env:LOG_LEVEL" `
-    $Image
+    -e "VERIFYIQ_MODE=$(if ($env:VERIFYIQ_MODE) { $env:VERIFYIQ_MODE } else { 'production' })" `
+    --entrypoint uvicorn `
+    $Image api.main:app --host 0.0.0.0 --port 8000
 
 Write-Host "==> Waiting for health check..."
 $healthy = $false

@@ -1,9 +1,7 @@
 """VerifyIQ CLI entry point.
 
 Usage:
-    verifyiq evaluate    — Run evaluation on sample claims
-    verifyiq analyze     — Analyze a single claim
-    verifyiq benchmark   — Run benchmarks
+    verifyiq evaluate    — Run the static V1 evaluation on sample claims
     verifyiq version     — Show version
 """
 
@@ -22,12 +20,10 @@ def main():
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
     sub.add_parser("version", help="Show version")
-    eval_cmd = sub.add_parser("evaluate", help="Run evaluation on sample claims")
-    eval_cmd.add_argument(
-        "--output", "-o", default=None, help="Output path for results"
+    sub.add_parser(
+        "evaluate",
+        help="Run the static V1 evaluation on dataset/sample_claims.csv",
     )
-
-    sub.add_parser("analyze", help="Analyze a single claim (not yet implemented)")
 
     args = parser.parse_args()
 
@@ -38,33 +34,33 @@ def main():
 
     if args.command == "evaluate":
         _run_evaluate(args)
-    elif args.command is None:
+    else:
         parser.print_help()
         sys.exit(1)
 
 
 def _run_evaluate(args):
+    import runpy
+    from pathlib import Path
+
+    import verifyiq  # noqa: F401  (makes the V1 code/ package importable)
+
+    script = Path(verifyiq.__file__).resolve().parent.parent / "code" / "evaluation" / "static_evaluate.py"
+    if not script.exists():
+        print(f"Error: evaluation script not found at {script}", file=sys.stderr)
+        sys.exit(1)
     try:
-        import sys as _sys
-        from pathlib import Path as _Path
-        _code_dir = str(_Path(__file__).resolve().parent.parent / "code")
-        if _code_dir not in _sys.path:
-            _sys.path.insert(0, _code_dir)
-
-        from code.evaluation.static_evaluate import main as evaluate_main
         from code.config import Config
-
-        config = Config()
-        print(f"Running evaluation on {config.sample_claims_path}...")
-        evaluate_main()
+        print(f"Running evaluation on {Config().sample_claims_path}...")
+        # static_evaluate.py is a script (no main()); execute it as __main__.
+        runpy.run_path(str(script), run_name="__main__")
         print("Evaluation complete.")
     except ImportError as e:
-        print(f"Error: evaluation module not available ({e})", file=_sys.stderr)
-        _sys.exit(1)
+        print(f"Error: evaluation dependencies not available ({e})", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
-        print(f"Error during evaluation: {e}", file=_sys.stderr)
-        _sys.exit(1)
-
+        print(f"Error during evaluation: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

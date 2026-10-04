@@ -1,7 +1,7 @@
 """Tests for claim parser improvements."""
 import sys, unittest
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "code"))
 from claim_parser import ClaimParser
 from config import Config
 

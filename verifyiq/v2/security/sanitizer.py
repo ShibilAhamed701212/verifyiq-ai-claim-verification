@@ -44,8 +44,10 @@ class InputSanitizer:
             base = Path(base_dir).resolve()
             target = (base / path).resolve()
             
-            # Symlink-aware check: ensure normalized target is within base
-            if not str(target).startswith(str(base)):
+            # Symlink-aware check: ensure normalized target is within base.
+            # A plain string-prefix test would accept sibling directories
+            # such as "<base>-other/...", so compare path components.
+            if not target.is_relative_to(base):
                 return ""  # Path traversal detected
             return str(target)
         except Exception:
