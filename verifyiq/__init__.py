@@ -9,21 +9,14 @@ import sys as _sys
 from pathlib import Path as _Path
 from importlib.metadata import PackageNotFoundError, version as _version
 
-# V1 code is frozen at code/ — keep it importable for V2 adapters.
-# The directory name collides with the standard-library ``code`` module, which
-# is found first on sys.path (and is often already imported, e.g. by pdb or
-# pytest). Put the project root ahead of it and drop a cached stdlib ``code``
-# so ``import code.<module>`` resolves to this project's package.
-_ROOT_DIR = str(_Path(__file__).resolve().parent.parent)
-_CODE_DIR = str(_Path(_ROOT_DIR) / "code")
-for _p in (_CODE_DIR, _ROOT_DIR):
-    if _p in _sys.path:
-        _sys.path.remove(_p)
-    _sys.path.insert(0, _p)
-_cached_code = _sys.modules.get("code")
-if _cached_code is not None and not hasattr(_cached_code, "__path__"):
-    del _sys.modules["code"]
-del _cached_code
+# V1 code is frozen at code/ and uses bare imports (``from config import
+# Config``). Put code/ on sys.path and import V1 modules by their bare names.
+# The ``code`` package name itself is never imported from here: it collides
+# with the standard-library ``code`` module (used by pdb), which must keep
+# resolving to the stdlib.
+_CODE_DIR = str(_Path(__file__).resolve().parent.parent / "code")
+if _CODE_DIR not in _sys.path:
+    _sys.path.insert(0, _CODE_DIR)
 
 try:
     __version__ = _version("verifyiq")

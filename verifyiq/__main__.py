@@ -43,14 +43,14 @@ def _run_evaluate(args):
     import runpy
     from pathlib import Path
 
-    import verifyiq  # noqa: F401  (makes the V1 code/ package importable)
+    import verifyiq  # noqa: F401  (puts code/ on sys.path for the V1 modules)
 
     script = Path(verifyiq.__file__).resolve().parent.parent / "code" / "evaluation" / "static_evaluate.py"
     if not script.exists():
         print(f"Error: evaluation script not found at {script}", file=sys.stderr)
         sys.exit(1)
     try:
-        from code.config import Config
+        from config import Config
         print(f"Running evaluation on {Config().sample_claims_path}...")
         # static_evaluate.py is a script (no main()); execute it as __main__.
         runpy.run_path(str(script), run_name="__main__")

@@ -13,7 +13,7 @@ import os
 import time
 from typing import Optional
 
-from code.config import Config
+from config import Config
 from verifyiq.v2.models.observation import ObservationReport
 from verifyiq.v2.models.consensus import ConsensusReport
 from verifyiq.v2.models.fraud import FraudReport
@@ -184,7 +184,7 @@ class V2Pipeline:
 
         damage_type = ""
         try:
-            from code.claim_parser import ClaimParser
+            from claim_parser import ClaimParser
             parser = ClaimParser(Config())
             parsed = parser.parse(claim_text, "")
             damage_type = parsed.get("claimed_damage_type", "")
@@ -232,7 +232,7 @@ class V2Pipeline:
                     "lighting_adequate": a.lighting_adequate,
                 })
 
-        from code.claim_parser import ClaimParser
+        from claim_parser import ClaimParser
         parser = ClaimParser(Config())
         parsed = parser.parse(claim_text, claim_object)
         issue_type = parsed.get("claimed_damage_type", "unknown")
@@ -277,7 +277,7 @@ class V2Pipeline:
                       claim_object: str, evidence_report: EvidenceReport) -> V2Decision:
         start = time.time()
         try:
-            from code.claim_parser import ClaimParser
+            from claim_parser import ClaimParser
             parser = ClaimParser(Config())
             parsed = parser.parse(claim_text, claim_object)
             damage_type = parsed.get("claimed_damage_type", "unknown")

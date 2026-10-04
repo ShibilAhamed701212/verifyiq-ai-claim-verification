@@ -7,11 +7,11 @@ No V1 file may be imported, modified, or monkey-patched by V2.
 from pathlib import Path
 from typing import Optional
 
-from code.config import Config
-from code.rule_engine import RuleEngine
-from code.severity_engine import SeverityEngine
-from code.evidence_checker import EvidenceChecker
-from code.claim_parser import ClaimParser
+from config import Config
+from rule_engine import RuleEngine
+from severity_engine import SeverityEngine
+from evidence_checker import EvidenceChecker
+from claim_parser import ClaimParser
 
 
 class V1RuleAdapter:
@@ -104,7 +104,7 @@ class V1RiskAdapter:
     }
 
     def __init__(self, config: Optional[Config] = None):
-        from code.risk_analyzer import RiskAnalyzer
+        from risk_analyzer import RiskAnalyzer
         self._analyzer = RiskAnalyzer(config or Config())
 
     def normalize(self, v2_flags: list[str], v1_flags: list[str]) -> tuple[list[str], list[str]]:

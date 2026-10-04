@@ -269,10 +269,10 @@ The V1 default model is `gemini-3.1-flash-lite-preview`; the V2 Gemini provider 
 
 ```bash
 pip install -e ".[dev]" -r code/requirements.txt
-pytest                      # all suites from pyproject.toml: 278 tests
+pytest                      # all suites from pyproject.toml: 279 tests
 pytest code/tests           # V1 unit tests (58)
 pytest code/v2/tests        # tests for the code/v2 copy (77)
-pytest tests                # package tests: tests/v1 (60) + tests/v2 (83, incl. audit regressions)
+pytest tests                # package tests: tests/v1 (60) + tests/v2 (84, incl. audit regressions)
 ```
 
 Verified passing on Python 3.10, 3.11 and 3.12 during the audit. The tests need no API key.
@@ -324,9 +324,10 @@ vision provider is configured; set `GEMINI_API_KEY` or `VERIFYIQ_MODE=demo`.
 - **The V2 package exists twice** (`verifyiq/v2/` and `code/v2/`), differing only in import paths.
   Fixes must be applied to both until one copy is removed.
 - **The `code/` directory name collides with Python's standard-library `code` module.**
-  `import verifyiq` works around this by putting the project root first on `sys.path` and evicting
-  a cached stdlib `code` module. Renaming the directory would remove the workaround but touches
-  every V1 import.
+  `verifyiq` sidesteps it by importing the V1 modules by bare name (`from config import Config`)
+  and never importing `code` as a package. `python -m code.main` works only from the repository
+  root, and the `code/tests` / `code/v2/tests` suites rely on a test-only workaround in the root
+  `conftest.py`. Renaming the directory would remove both, but touches every V1 import.
 - The package only works from a source checkout or editable install, because `verifyiq` imports
   the V1 modules from the sibling `code/` directory.
 - The API has no authentication, rate limiting or batch-size limit.
@@ -340,8 +341,8 @@ vision provider is configured; set `GEMINI_API_KEY` or `VERIFYIQ_MODE=demo`.
 
 | Priority | Problem | Fix |
 |---|---|---|
-| P1 | Every test suite failed at import (CI red since the first run): pytest imports the stdlib `code` module before the project's `code` package, and `tests/v1` put the wrong directory on `sys.path` | Root `conftest.py` imports `verifyiq`, which now puts the project first on `sys.path` and evicts the cached stdlib module; fixed `tests/v1` paths |
-| P1 | `import verifyiq.v1` / `verifyiq.v2` failed outside the repository root (same collision) | Same `verifyiq/__init__.py` fix; regression test simulates an installed layout |
+| P1 | Every test suite failed at import (CI red since the first run): pytest imports the stdlib `code` module before the project's `code` package, and `tests/v1` put the wrong directory on `sys.path` | Test-only workaround in a root `conftest.py`; fixed `tests/v1` paths |
+| P1 | `import verifyiq.v1` / `verifyiq.v2` failed outside the repository root (same collision) | `verifyiq` imports V1 modules by bare name instead of `code.*`; regression tests check it imports with the stdlib `code` loaded and leaves that module intact |
 | P1 | `verifyiq evaluate` always failed: it imported a non-existent `main()` from `static_evaluate.py` via the shadowed `code` name | CLI now runs the script with `runpy`; removed the unused `--output` flag and the unimplemented `analyze` command |
 | P1 | `numpy` / `opencv-python-headless` were missing from all dependency lists, but the risk analyzer imports them whenever a claim has images (static evaluation crashed; in the batch pipeline the risk stage failed and every claim with images lost all of its risk flags except `manual_review_required`) | Added to `pyproject.toml` and `code/requirements.txt`; `google-genai` added to the `v1` extra |
 | P2 | Tesseract path hard-coded to `C:\Program Files\...`, so OCR never worked on Linux/macOS/Docker | Uses `$TESSERACT_CMD`, the Windows default if it exists, else `PATH` |

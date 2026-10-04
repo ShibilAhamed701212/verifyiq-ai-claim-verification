@@ -67,14 +67,28 @@ def test_fraud_layer_passes_parsed_damage_type_to_behavioral_detector():
     assert seen["damage_type"] == "dent"
 
 
-def test_v2_pipeline_imports_when_stdlib_code_is_already_loaded(tmp_path):
+def _run_isolated(script, tmp_path):
     # Simulates an installed package: the project root is on sys.path *after*
-    # the stdlib, and the stdlib ``code`` module has already been imported.
-    script = (
-        "import code, sys; "
-        f"sys.path.append({str(ROOT)!r}); "
-        "from verifyiq.v2.pipeline import V2Pipeline; import verifyiq.v1; print('ok')"
+    # the stdlib, so ``import code`` resolves to the standard library.
+    prelude = f"import sys; sys.path.append({str(ROOT)!r}); "
+    return subprocess.run([sys.executable, "-c", prelude + script], cwd=tmp_path,
+                          capture_output=True, text=True)
+
+
+def test_v2_pipeline_imports_when_stdlib_code_is_already_loaded(tmp_path):
+    proc = _run_isolated(
+        "import code; from verifyiq.v2.pipeline import V2Pipeline; import verifyiq.v1; print('ok')",
+        tmp_path,
     )
-    proc = subprocess.run([sys.executable, "-c", script], cwd=tmp_path, capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "ok"
+
+
+def test_importing_verifyiq_leaves_stdlib_code_module_intact(tmp_path):
+    proc = _run_isolated(
+        "import code, verifyiq.v1, verifyiq.v2; import code as c; import pdb; pdb.Pdb(); "
+        "print(hasattr(c, 'InteractiveConsole'))",
+        tmp_path,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.strip() == "True"
