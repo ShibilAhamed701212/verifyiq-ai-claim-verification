@@ -3,10 +3,9 @@ Error analysis report generation for sample evaluation.
 """
 
 from pathlib import Path
-from typing import Dict, List
 
 
-def classify_error(differences: List[Dict[str, str]]) -> str:
+def classify_error(differences: list[dict[str, str]]) -> str:
     fields = {diff.get("field") for diff in differences if isinstance(diff, dict)}
     if "issue_type" in fields:
         return "damage type mismatch"
@@ -21,11 +20,11 @@ def classify_error(differences: List[Dict[str, str]]) -> str:
     return "other"
 
 
-def generate_error_report(results: List[Dict], output_dir: Path) -> None:
+def generate_error_report(results: list[dict], output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "error_report.md"
 
-    grouped: Dict[str, List[Dict]] = {}
+    grouped: dict[str, list[dict]] = {}
     for result in results:
         comparison = result.get("comparison", {})
         if comparison.get("match"):

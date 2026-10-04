@@ -2,9 +2,10 @@
 Crop and obstruction detector using edge analysis and aspect ratio.
 """
 
+from pathlib import Path
+
 import cv2
 import numpy as np
-from pathlib import Path
 
 
 class CropDetector:

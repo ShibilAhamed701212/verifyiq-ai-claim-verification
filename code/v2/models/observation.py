@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -13,7 +12,7 @@ class PerImageAssessment:
     angle_sufficient: bool = False
     lighting_adequate: bool = False
     issues: list[str] = field(default_factory=list)
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -22,8 +21,8 @@ class Observation:
     provider: str
     success: bool
     assessments: list[PerImageAssessment] = field(default_factory=list)
-    raw_response: Optional[str] = None
-    error: Optional[str] = None
+    raw_response: str | None = None
+    error: str | None = None
     latency_ms: float = 0.0
     degraded: bool = False
 
@@ -32,4 +31,4 @@ class Observation:
 class ObservationReport:
     observations: list[Observation] = field(default_factory=list)
     all_failed: bool = True
-    primary_model: Optional[str] = None
+    primary_model: str | None = None

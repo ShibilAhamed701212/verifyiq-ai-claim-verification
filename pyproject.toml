@@ -96,6 +96,13 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+# Long lines (mostly literal tables, f-strings and fallback dicts) are left to a
+# future `ruff format` pass rather than hand-wrapped.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# code/ must be on sys.path before the bare V1 imports.
+"verifyiq/v1/__init__.py" = ["E402"]
 
 [tool.mypy]
 python_version = "3.10"

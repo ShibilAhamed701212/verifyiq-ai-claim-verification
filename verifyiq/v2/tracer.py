@@ -3,7 +3,6 @@
 import functools
 import time
 import uuid
-from typing import Optional
 
 
 class Tracer:
@@ -15,7 +14,7 @@ class Tracer:
             ...
     """
 
-    def __init__(self, trace_id: Optional[str] = None):
+    def __init__(self, trace_id: str | None = None):
         self.trace_id = trace_id or self.generate_trace_id()
         self._spans: list[dict] = []
 
@@ -66,10 +65,6 @@ def trace(func):
     def wrapper(*args, **kwargs):
         if "trace_id" not in kwargs:
             kwargs["trace_id"] = Tracer.generate_trace_id()
-        start = time.time()
-        try:
-            return func(*args, **kwargs)
-        finally:
-            elapsed = (time.time() - start) * 1000
+        return func(*args, **kwargs)
 
     return wrapper

@@ -1,7 +1,5 @@
 import time
-import importlib
 from contextlib import contextmanager
-from typing import Optional
 
 _import_timings: dict[str, float] = {}
 
@@ -21,9 +19,9 @@ def get_startup_profile() -> dict:
     return dict(sorted(_import_timings.items()))
 
 
-def measure_claim_latency(pipeline, claim_text: str, image_paths: Optional[list[str]] = None,
+def measure_claim_latency(pipeline, claim_text: str, image_paths: list[str] | None = None,
                            claim_object: str = "", user_id: str = "",
-                           evidence_requirements: Optional[list[dict]] = None) -> dict:
+                           evidence_requirements: list[dict] | None = None) -> dict:
     """Run pipeline.process and return a timing breakdown in ms."""
     from verifyiq.v2.observability.metrics import get_collector
     get_collector().reset()

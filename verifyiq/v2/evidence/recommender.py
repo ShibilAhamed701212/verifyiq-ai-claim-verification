@@ -1,8 +1,9 @@
-from verifyiq.v2.models.evidence import EvidenceReport, EvidenceRecommendation
+from verifyiq.v2.models.evidence import EvidenceRecommendation, EvidenceReport
+
 
 class EvidenceRecommender:
     """Adds specific missing evidence recommendations when evidence_standard_met=False."""
-    
+
     RECOMMENDATIONS = {
         "no_clear_image": EvidenceRecommendation(
             missing_type="clear_image",
@@ -45,13 +46,13 @@ class EvidenceRecommender:
             priority="medium",
         ),
     }
-    
+
     def recommend(self, evidence_report: EvidenceReport) -> EvidenceReport:
         if evidence_report.evidence_standard_met:
             return evidence_report
-        
+
         reason = (evidence_report.reason or "").lower()
-        
+
         if "clear" in reason or "quality" in reason:
             evidence_report.recommendations.append(self.RECOMMENDATIONS["no_clear_image"])
         if "angle" in reason or "perspective" in reason:
@@ -64,10 +65,10 @@ class EvidenceRecommender:
             evidence_report.recommendations.append(self.RECOMMENDATIONS["blurry"])
         if "light" in reason or "dark" in reason or "exposure" in reason:
             evidence_report.recommendations.append(self.RECOMMENDATIONS["bad_lighting"])
-        
+
         # Default recommendation if nothing specific
         if not evidence_report.recommendations:
             evidence_report.recommendations.append(self.RECOMMENDATIONS["no_clear_image"])
             evidence_report.recommendations.append(self.RECOMMENDATIONS["missing_close_up"])
-        
+
         return evidence_report

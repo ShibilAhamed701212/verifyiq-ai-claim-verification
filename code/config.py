@@ -2,9 +2,8 @@
 Configuration and constants for the evidence review system.
 """
 
-from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
 
 
 @dataclass
@@ -22,7 +21,7 @@ class Config:
 
     # --- Vision LLM Settings ---
     vision_model: str = "gemini-3.1-flash-lite-preview"
-    api_key: Optional[str] = None
+    api_key: str | None = None
     max_tokens: int = 800
     temperature: float = 0.0
     vision_api_timeout: int = 60

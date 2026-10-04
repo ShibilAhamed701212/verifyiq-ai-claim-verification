@@ -7,18 +7,18 @@ Decision Agent -> Output Validator.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from claim_parser import ClaimParser
 from config import Config
 from decision_agent import DecisionAgent
 from evidence_checker import EvidenceChecker
+from image_preprocessor import normalize_images
+from image_validator import all_images_valid, any_valid_images, validate_images
 from output_validator import OutputValidator
 from risk_analyzer import RiskAnalyzer
 from rule_engine import RuleEngine
 from severity_engine import SeverityEngine
-from image_preprocessor import normalize_images
-from image_validator import validate_images, any_valid_images, all_images_valid
 from utils import extract_claim_text, parse_image_paths, safe_csv_read
 from vision_analyzer import analyze_images
 
@@ -37,7 +37,7 @@ class ClaimProcessor:
         self.output_validator = OutputValidator(config)
         self.severity_engine = SeverityEngine()
         self.decision_agent = DecisionAgent(self.output_validator, self.severity_engine)
-        self.user_history_cache: Dict[str, Dict[str, Any]] = {}
+        self.user_history_cache: dict[str, dict[str, Any]] = {}
         self._load_user_history()
 
     def _load_user_history(self) -> None:
@@ -51,10 +51,10 @@ class ClaimProcessor:
                 self.user_history_cache[user_id] = row
         logger.info(f"Loaded history for {len(self.user_history_cache)} users")
 
-    def _get_user_history(self, user_id: str) -> Optional[Dict[str, Any]]:
+    def _get_user_history(self, user_id: str) -> dict[str, Any] | None:
         return self.user_history_cache.get(user_id)
 
-    def process_claim(self, claim_row: Dict[str, str]) -> Dict[str, str]:
+    def process_claim(self, claim_row: dict[str, str]) -> dict[str, str]:
         user_id = claim_row.get("user_id", "").strip()
         image_paths_str = claim_row.get("image_paths", "").strip()
         user_claim = claim_row.get("user_claim", "").strip()
@@ -145,11 +145,11 @@ class ClaimProcessor:
             logger.error(f"Decision agent build failed for {user_id}: {e}", exc_info=True)
             return self.decision_agent.fallback_output(claim_row, str(e))
 
-    def _fallback_output(self, claim_row: Dict[str, str], error_message: str) -> Dict[str, str]:
+    def _fallback_output(self, claim_row: dict[str, str], error_message: str) -> dict[str, str]:
         return self.decision_agent.fallback_output(claim_row, error_message)
 
     @staticmethod
-    def _empty_vision_result(reason: str) -> Dict[str, Any]:
+    def _empty_vision_result(reason: str) -> dict[str, Any]:
         return {
             "damage_visible": False, "damage_type": "unknown", "object_part": "unknown",
             "image_quality": "unknown", "supporting_images": [], "confidence": 0.0,

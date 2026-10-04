@@ -1,12 +1,10 @@
 """Batch processing for 100/1000/10000 claims."""
 
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
-from typing import Optional
-
 from code.v2.pipeline import V2Pipeline
 from code.v2.rate_limiter import RateLimiter
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 
 
 @dataclass
@@ -21,7 +19,7 @@ class BatchConfig:
 class BatchProcessor:
     """Process claims in batches with rate limiting and error isolation."""
 
-    def __init__(self, pipeline: V2Pipeline, rate_limiter: Optional[RateLimiter] = None):
+    def __init__(self, pipeline: V2Pipeline, rate_limiter: RateLimiter | None = None):
         self.pipeline = pipeline
         self.rate_limiter = rate_limiter or RateLimiter()
         self._stats = {

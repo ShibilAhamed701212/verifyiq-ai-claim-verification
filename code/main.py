@@ -5,22 +5,20 @@ and writes the final output CSV.
 """
 
 import csv
-import logging
-import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 from claim_processor import ClaimProcessor
 from config import Config
 from submission_critic import validate_output_rows
-from utils import setup_logging, ensure_output_dir
+from utils import ensure_output_dir, setup_logging
 
 logger = setup_logging()
 
 
-def read_claims(csv_path: Path) -> List[Dict[str, str]]:
+def read_claims(csv_path: Path) -> list[dict[str, str]]:
     claims = []
-    with open(csv_path, "r", encoding="utf-8") as f:
+    with open(csv_path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             claims.append(row)
@@ -28,7 +26,7 @@ def read_claims(csv_path: Path) -> List[Dict[str, str]]:
     return claims
 
 
-def write_output(output_path: Path, rows: List[Dict[str, Any]]) -> None:
+def write_output(output_path: Path, rows: list[dict[str, Any]]) -> None:
     fieldnames = [
         "user_id",
         "image_paths",

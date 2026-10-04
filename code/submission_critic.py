@@ -1,7 +1,6 @@
 """Post-processing validation and consistency checking for output rows."""
 
 import logging
-from typing import Any, Dict, List, Set
 
 logger = logging.getLogger("evidence_review.critic")
 
@@ -17,7 +16,7 @@ RISK_FLAGS_THAT_ALLOW_UNKNOWN = {
 }
 
 
-def validate_output_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+def validate_output_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     """Post-process output rows: check for missing fields, contradictions, unknowns without flags."""
     fixed = 0
     for row in rows:
@@ -38,13 +37,13 @@ def validate_output_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
     return rows
 
 
-def _ensure_required_fields(row: Dict[str, str]) -> None:
+def _ensure_required_fields(row: dict[str, str]) -> None:
     for field in REQUIRED_FIELDS:
         if field not in row or not row[field]:
             row[field] = row.get(field, "")
 
 
-def _fix_unknown_without_review_flag(row: Dict[str, str]) -> bool:
+def _fix_unknown_without_review_flag(row: dict[str, str]) -> bool:
     """If issue_type or severity is unknown, ensure manual_review_required flag is set."""
     flags = _parse_flags(row.get("risk_flags", ""))
     if not flags.intersection(RISK_FLAGS_THAT_ALLOW_UNKNOWN):
@@ -60,9 +59,8 @@ def _fix_unknown_without_review_flag(row: Dict[str, str]) -> bool:
     return False
 
 
-def _fix_contradiction_detected_supported_with_no_damage(row: Dict[str, str]) -> bool:
+def _fix_contradiction_detected_supported_with_no_damage(row: dict[str, str]) -> bool:
     evidence_met = row.get("evidence_standard_met", "").lower() == "true"
-    valid_image = row.get("valid_image", "").lower() == "true"
     status = row.get("claim_status", "")
     issue_type = row.get("issue_type", "")
 
@@ -85,7 +83,7 @@ def _fix_contradiction_detected_supported_with_no_damage(row: Dict[str, str]) ->
     return False
 
 
-def _fix_contradiction_supported_with_conflict(row: Dict[str, str]) -> bool:
+def _fix_contradiction_supported_with_conflict(row: dict[str, str]) -> bool:
     status = row.get("claim_status", "")
     flags = _parse_flags(row.get("risk_flags", ""))
     if status == "supported" and "claim_mismatch" in flags:
@@ -95,7 +93,7 @@ def _fix_contradiction_supported_with_conflict(row: Dict[str, str]) -> bool:
     return False
 
 
-def _fix_missing_manual_review(row: Dict[str, str]) -> bool:
+def _fix_missing_manual_review(row: dict[str, str]) -> bool:
     flags = _parse_flags(row.get("risk_flags", ""))
     if not flags:
         return False
@@ -107,11 +105,11 @@ def _fix_missing_manual_review(row: Dict[str, str]) -> bool:
     return False
 
 
-def _parse_flags(raw: str) -> Set[str]:
+def _parse_flags(raw: str) -> set[str]:
     return {f.strip() for f in raw.split(";") if f.strip() and f.strip() != "none"}
 
 
-def _diff(original: Dict[str, str], updated: Dict[str, str]) -> str:
+def _diff(original: dict[str, str], updated: dict[str, str]) -> str:
     changes = []
     for k in REQUIRED_FIELDS:
         if original.get(k) != updated.get(k):

@@ -6,7 +6,7 @@ those descriptions to deterministic image-quality and part-visibility checks.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from utils import safe_csv_read
 
@@ -16,7 +16,7 @@ class EvidenceChecker:
 
     def __init__(self, csv_path: Path):
         self.csv_path = csv_path
-        self.requirements: List[Dict[str, str]] = []
+        self.requirements: list[dict[str, str]] = []
         self._loaded = False
 
     def load(self) -> None:
@@ -35,10 +35,10 @@ class EvidenceChecker:
     def evaluate(
         self,
         claim_object: str,
-        parser_result: Dict[str, str],
-        vision_result: Dict[str, Any],
+        parser_result: dict[str, str],
+        vision_result: dict[str, Any],
         total_images: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         self.load()
         requirement = self._select_requirement(
             claim_object,
@@ -77,11 +77,11 @@ class EvidenceChecker:
         if missing:
             return self._result(False, f"Requirement not met: {'; '.join(missing)}.", requirement, valid)
         if part_unclear and not clear:
-            return self._result(False, f"Required image quality not met.", requirement, valid)
+            return self._result(False, "Required image quality not met.", requirement, valid)
 
         return self._result(True, "Requirement met: image quality is sufficient for evaluation.", requirement, valid)
 
-    def _select_requirement(self, claim_object: str, damage_type: str, object_part: str) -> Dict[str, str]:
+    def _select_requirement(self, claim_object: str, damage_type: str, object_part: str) -> dict[str, str]:
         claim_object = (claim_object or "").lower()
         damage_text = (damage_type or "").replace("_", " ")
         part_text = (object_part or "").replace("_", " ")
@@ -105,7 +105,7 @@ class EvidenceChecker:
             "text": "Images should clearly show the claimed object and relevant part.",
         }
 
-    def _relevant_assessments(self, assessments: List[Dict[str, Any]], claimed_part: str) -> List[Dict[str, Any]]:
+    def _relevant_assessments(self, assessments: list[dict[str, Any]], claimed_part: str) -> list[dict[str, Any]]:
         if not assessments:
             return []
         if not claimed_part or claimed_part == "unknown":
@@ -120,8 +120,8 @@ class EvidenceChecker:
     def _part_visible(
         self,
         claimed_part: str,
-        vision_result: Dict[str, Any],
-        relevant: List[Dict[str, Any]],
+        vision_result: dict[str, Any],
+        relevant: list[dict[str, Any]],
     ) -> bool:
         if not claimed_part or claimed_part == "unknown":
             return bool(relevant)
@@ -133,10 +133,10 @@ class EvidenceChecker:
                 return True
         return False
 
-    def _quality_ok(self, assessment: Dict[str, Any]) -> bool:
+    def _quality_ok(self, assessment: dict[str, Any]) -> bool:
         return assessment.get("is_clear", False) and assessment.get("image_quality", "unknown") in ("good", "adequate")
 
-    def _result(self, met: bool, reason: str, requirement: Dict[str, str], valid_image: bool) -> Dict[str, Any]:
+    def _result(self, met: bool, reason: str, requirement: dict[str, str], valid_image: bool) -> dict[str, Any]:
         requirement_text = requirement.get("text", "")
         full_reason = f"{reason} Requirement considered: {requirement_text}".strip()
         return {

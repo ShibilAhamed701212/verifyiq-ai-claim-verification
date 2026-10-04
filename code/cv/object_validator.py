@@ -3,9 +3,9 @@ Wrong object detection using deterministic heuristics.
 Compares image properties against expected claim object type.
 """
 
-import cv2
-import numpy as np
 from pathlib import Path
+
+import cv2
 
 
 class ObjectValidator:

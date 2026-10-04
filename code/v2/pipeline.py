@@ -11,28 +11,28 @@ silent degradation.
 
 import os
 import time
-from typing import Optional
-
 from code.config import Config
-from code.v2.models.observation import ObservationReport
-from code.v2.models.consensus import ConsensusReport
-from code.v2.models.fraud import FraudReport
-from code.v2.models.evidence import EvidenceReport
-from code.v2.models.conversation import ConversationReport
-from code.v2.models.confidence import ConfidenceReport
-from code.v2.models.decision import V2Decision
-
-from code.v2.consensus import ConsensusEngine
-from code.v2.fraud import ImageFraudDetector, MetadataFraudDetector, BehavioralFraudDetector
-from code.v2.conversation.analyzer import ConversationAnalyzer
 from code.v2.confidence.calibrator import ConfidenceCalibrator
-from code.v2.evidence.recommender import EvidenceRecommender
+from code.v2.consensus import ConsensusEngine
+from code.v2.conversation.analyzer import ConversationAnalyzer
 from code.v2.critic.v2_critic import V2Critic
+from code.v2.evidence.recommender import EvidenceRecommender
 from code.v2.explainability.tracer import DecisionTracer
-from code.v2.observability.metrics import MetricsCollector, get_collector
+from code.v2.fraud import BehavioralFraudDetector, ImageFraudDetector, MetadataFraudDetector
+from code.v2.models.confidence import ConfidenceReport
+from code.v2.models.consensus import ConsensusReport
+from code.v2.models.conversation import ConversationReport
+from code.v2.models.decision import V2Decision
+from code.v2.models.evidence import EvidenceReport
+from code.v2.models.fraud import FraudReport
+from code.v2.models.observation import ObservationReport
+from code.v2.observability.metrics import get_collector
 from code.v2.security.sanitizer import InputSanitizer
-from code.v2.v1_adapter import V1RuleAdapter, V1SeverityAdapter, V1EvidenceAdapter, V1ParserAdapter
-from code.v2.vision_manager import VisionAvailabilityManager, VisionUnavailableError, VisionState, FallbackMode
+from code.v2.v1_adapter import V1EvidenceAdapter, V1ParserAdapter, V1RuleAdapter, V1SeverityAdapter
+from code.v2.vision_manager import (
+    VisionAvailabilityManager,
+    VisionState,
+)
 
 
 class V2Pipeline:
@@ -42,7 +42,7 @@ class V2Pipeline:
     degraded-but-valid output. No layer crashes the pipeline.
     """
 
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: dict | None = None):
         self.config = config or {}
         self.metrics = get_collector()
 
@@ -96,7 +96,7 @@ class V2Pipeline:
         self.sanitizer = InputSanitizer()
 
     def process(self, claim_text: str, image_paths: list[str], claim_object: str,
-                 user_id: str = "", evidence_requirements: Optional[list[dict]] = None) -> V2Decision:
+                 user_id: str = "", evidence_requirements: list[dict] | None = None) -> V2Decision:
         self.metrics.start()
 
         # Layer 0: Sanitize inputs
@@ -211,8 +211,8 @@ class V2Pipeline:
         )
 
     def _run_evidence(self, observation_report: ObservationReport, claim_text: str,
-                       claim_object: str, evidence_requirements: Optional[list[dict]] = None,
-                       image_paths: Optional[list[str]] = None) -> EvidenceReport:
+                       claim_object: str, evidence_requirements: list[dict] | None = None,
+                       image_paths: list[str] | None = None) -> EvidenceReport:
         start = time.time()
         if not evidence_requirements:
             evidence_requirements = []

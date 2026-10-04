@@ -1,9 +1,7 @@
 import json
 import time
-from pathlib import Path
-from typing import Optional
-
 from code.v2.models.decision import V2Decision
+from pathlib import Path
 
 
 class TraceLogger:

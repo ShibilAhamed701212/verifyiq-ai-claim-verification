@@ -3,15 +3,14 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger("evidence_review.text_detector")
 
-_TESSERACT_AVAILABLE: Optional[bool] = None
+_TESSERACT_AVAILABLE: bool | None = None
 _WINDOWS_DEFAULT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-def _tesseract_cmd() -> Optional[str]:
+def _tesseract_cmd() -> str | None:
     """Tesseract binary to use: $TESSERACT_CMD, else the Windows default
     install path if it exists, else None (pytesseract then searches PATH)."""
     env_cmd = os.environ.get("TESSERACT_CMD")

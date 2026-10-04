@@ -1,6 +1,6 @@
-from typing import Optional
+
+from verifyiq.v2.models.observation import Observation, ObservationReport
 from verifyiq.v2.providers.base import VisionProvider
-from verifyiq.v2.models.observation import ObservationReport, Observation
 
 
 class LocalVLMProvider(VisionProvider):
@@ -8,7 +8,7 @@ class LocalVLMProvider(VisionProvider):
 
     PROVIDER_NAME = "local_vlm"
 
-    def __init__(self, model_name: str = "qwen2.5-vl-7b", config: Optional[dict] = None):
+    def __init__(self, model_name: str = "qwen2.5-vl-7b", config: dict | None = None):
         super().__init__(model_name, config)
 
     def _check_availability(self) -> bool:
