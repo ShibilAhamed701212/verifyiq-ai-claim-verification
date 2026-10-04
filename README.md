@@ -269,10 +269,10 @@ The V1 default model is `gemini-3.1-flash-lite-preview`; the V2 Gemini provider 
 
 ```bash
 pip install -e ".[dev]" -r code/requirements.txt
-pytest                      # all suites from pyproject.toml: 279 tests
+pytest                      # all suites from pyproject.toml: 281 tests
 pytest code/tests           # V1 unit tests (58)
 pytest code/v2/tests        # tests for the code/v2 copy (77)
-pytest tests                # package tests: tests/v1 (60) + tests/v2 (84, incl. audit regressions)
+pytest tests                # package tests: tests/v1 (60) + tests/v2 (86, incl. audit regressions)
 ```
 
 Verified passing on Python 3.10, 3.11 and 3.12 during the audit. The tests need no API key.

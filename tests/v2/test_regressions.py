@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from verifyiq.v2.explainability.tracer import DecisionTracer
 from verifyiq.v2.models.confidence import ConfidenceBreakdown, ConfidenceReport
 from verifyiq.v2.models.consensus import ConsensusReport
@@ -84,10 +86,19 @@ def test_v2_pipeline_imports_when_stdlib_code_is_already_loaded(tmp_path):
     assert proc.stdout.strip() == "ok"
 
 
-def test_importing_verifyiq_leaves_stdlib_code_module_intact(tmp_path):
+@pytest.mark.parametrize(
+    "imports",
+    [
+        "import verifyiq.v1, verifyiq.v2; import pdb",          # verifyiq first, then pdb
+        "import pdb; import verifyiq.v1, verifyiq.v2",          # pdb first, then verifyiq
+        "import code; import verifyiq.v1, verifyiq.v2; import pdb",
+    ],
+    ids=["verifyiq-then-pdb", "pdb-then-verifyiq", "stdlib-code-preloaded"],
+)
+def test_importing_verifyiq_leaves_stdlib_code_module_intact(imports, tmp_path):
     proc = _run_isolated(
-        "import code, verifyiq.v1, verifyiq.v2; import code as c; import pdb; pdb.Pdb(); "
-        "print(hasattr(c, 'InteractiveConsole'))",
+        imports + "; pdb.Pdb(); import code; "
+        "print(hasattr(code, 'InteractiveConsole') and hasattr(code, 'InteractiveInterpreter'))",
         tmp_path,
     )
     assert proc.returncode == 0, proc.stderr
