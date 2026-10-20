@@ -11,6 +11,7 @@ require a matching X-API-Key header. /health stays open for probes.
 
 import hmac
 import os
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -29,9 +30,12 @@ from verifyiq.v2.vision_manager import VisionUnavailableError
 
 # ── Request / Response Models ──────────────────────────────────────────────
 
+MAX_IMAGES_PER_CLAIM = 10
+
+
 class ClaimRequest(BaseModel):
     claim_text: str
-    image_paths: list[str] = Field(default_factory=list)
+    image_paths: list[str] = Field(default_factory=list, max_length=MAX_IMAGES_PER_CLAIM)
     claim_object: str
     user_id: Optional[str] = None
 
@@ -70,8 +74,16 @@ class HealthResponse(BaseModel):
 # ── Lazy Singleton ─────────────────────────────────────────────────────────
 
 _pipeline = None
+# The pipeline and its vision manager keep shared state that is not thread-safe,
+# so claims are processed one at a time off the event loop.
+_pipeline_lock = threading.Lock()
 _startup_time = time.time()
 _logger = get_logger("api.main")
+
+
+def _process_claim(pipeline, **kwargs):
+    with _pipeline_lock:
+        return pipeline.process(**kwargs)
 
 
 def get_pipeline():
@@ -153,7 +165,8 @@ async def verify_claim(request: ClaimRequest):
         pipeline = get_pipeline()
         # pipeline.process is blocking (OCR, vision calls); keep the event loop free.
         decision = await run_in_threadpool(
-            pipeline.process,
+            _process_claim,
+            pipeline,
             claim_text=request.claim_text,
             image_paths=request.image_paths,
             claim_object=request.claim_object,

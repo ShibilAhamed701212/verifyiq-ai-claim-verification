@@ -360,4 +360,5 @@ class V2Pipeline:
                 decision.risk_flags.append("manual_review_required")
             decision.justification += f" | Critic: {'; '.join(critic_issues)}"
 
+        decision.risk_flags = sorted(set(decision.risk_flags))
         return decision

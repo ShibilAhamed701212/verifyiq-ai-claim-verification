@@ -225,14 +225,15 @@ Interactive docs at `http://localhost:8000/docs` (`/` redirects there).
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/claim` | Verify one claim. Body: `claim_text`, `claim_object`, `image_paths` (server-local paths), optional `user_id` |
+| `POST` | `/claim` | Verify one claim. Body: `claim_text`, `claim_object`, `image_paths` (up to 10 server-local paths), optional `user_id` |
 | `POST` | `/batch` | Verify up to 100 claims sequentially (`{"claims": [...]}`); larger batches get 422 |
 | `GET` | `/health` | Status, mode, vision state and per-provider health. Returns 503 in production mode when no provider is available |
 | `GET` | `/metrics` | Request/failure counters, latency stats, per-stage metrics, vision report |
 
 If `VERIFYIQ_API_KEY` is set, `/claim`, `/batch` and `/metrics` require a matching `X-API-Key`
 header (401 otherwise); `/health` stays open for probes. Without it the API is unauthenticated.
-There is no rate limiting, and the API reads images from the server's filesystem, so do not
+Claims are processed one at a time in a worker thread (the pipeline's shared state is not
+thread-safe), and Gemini calls time out after 60 s. There is no rate limiting, and the API reads images from the server's filesystem, so do not
 expose it publicly without a key and a proxy in front of it.
 
 Example response captured during the audit (demo mode, no API key, so vision was unavailable):
@@ -272,7 +273,7 @@ The V1 default model is `gemini-3.1-flash-lite-preview`; the V2 Gemini provider 
 
 ```bash
 pip install -e ".[dev]" -r code/requirements.txt
-pytest                      # all suites from pyproject.toml: 289 tests
+pytest                      # all suites from pyproject.toml: 292 tests
 pytest code/tests           # V1 unit tests (58)
 pytest code/v2/tests        # tests for the code/v2 copy (77)
 pytest tests                # package tests: tests/v1 (60) + tests/v2 (86, incl. audit regressions)
@@ -366,9 +367,9 @@ Second pass (2026-10-20):
 | Priority | Problem | Fix |
 |---|---|---|
 | P2 | Metadata fraud flagged genuine multi-photo phone claims as high risk: any EXIF `Software` value (e.g. iOS `17.4.1`) counted as editing, and any two different capture times counted as a mismatch (two iPhone photos 40 s apart scored 0.6) | Only known editing apps count; capture times must be more than 24 h apart (both copies) |
-| P2 | V2 Gemini provider sent only the claim text, no task prompt or JSON schema, and mis-aligned per-image results when an image failed to load | Sends the V1 prompt and schema; results map to the images actually sent; string booleans parsed (both copies) |
+| P2 | V2 Gemini provider sent only the claim text, no task prompt or JSON schema, and mis-aligned per-image results when an image failed to load | Sends the V1 prompt and schema with the claim quoted as untrusted input; results map by `image_id` to the images actually sent; 60 s request timeout; string booleans parsed (both copies) |
 | P2 | Screenshot check loaded every pixel into Python (670 MB, 3.7 s for a 4000x2250 photo) | Inspects only the top row (50 MB, 0.09 s) |
-| P2 | API ran the blocking pipeline inside `async` handlers (one claim stalled every request); `/batch` had no size limit; no way to require auth | Pipeline runs in a thread pool; batches capped at 100; optional `VERIFYIQ_API_KEY` |
+| P2 | API ran the blocking pipeline inside `async` handlers (one claim stalled every request); `/batch` had no size limit; no way to require auth | Pipeline runs off the event loop (serialized); batches capped at 100 claims and claims at 10 images; optional `VERIFYIQ_API_KEY` |
 | P3 | Risk flags were returned in random order | Sorted |
 
 ---

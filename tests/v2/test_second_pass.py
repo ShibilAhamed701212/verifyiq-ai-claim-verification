@@ -71,7 +71,7 @@ class _FakeModels:
 def _install_fake_genai(monkeypatch, reply):
     models = _FakeModels(reply)
     genai = types.ModuleType("google.genai")
-    genai.Client = lambda api_key: types.SimpleNamespace(models=models)
+    genai.Client = lambda api_key, **kwargs: types.SimpleNamespace(models=models)
     google = types.ModuleType("google")
     google.genai = genai
     monkeypatch.setitem(sys.modules, "google", google)
@@ -94,13 +94,38 @@ def test_gemini_provider_sends_prompt_and_aligns_assessments(tmp_path, monkeypat
     report = GeminiProvider(config={"api_key": "test"}).analyze(
         [str(missing), str(good)], "dent on my door", "car")
 
-    prompt = models.calls[0][0]
+    from prompts import SYSTEM_PROMPT
+
+    prompt, *images = models.calls[0]
     assert isinstance(prompt, str)
-    assert "per_image_assessments" in prompt
-    assert "dent on my door" in prompt
+    assert prompt.startswith(SYSTEM_PROMPT)
+    for field in ("per_image_assessments", "image_id", "damage_type", "object_part", "lighting_adequate"):
+        assert field in prompt
+    assert '"dent on my door"' in prompt
+    assert "img_1" in prompt
+    assert len(images) == 1 and isinstance(images[0], Image.Image)
     assessments = report.observations[0].assessments
     assert [a.image_path for a in assessments] == [str(good)]
     assert assessments[0].damage_visible is True
+
+
+def test_gemini_provider_maps_assessments_by_image_id(tmp_path, monkeypatch):
+    from verifyiq.v2.providers.gemini_provider import GeminiProvider
+
+    paths = []
+    for name in ("a.jpg", "b.jpg"):
+        Image.new("RGB", (32, 32)).save(tmp_path / name)
+        paths.append(str(tmp_path / name))
+    reply = json.dumps({"per_image_assessments": [
+        {"image_id": "img_2", "damage_visible": True, "damage_type": "crack"},
+        {"image_id": "img_1", "damage_visible": False, "damage_type": "none"},
+    ]})
+    _install_fake_genai(monkeypatch, reply)
+
+    report = GeminiProvider(config={"api_key": "test"}).analyze(paths, "cracked screen", "laptop")
+
+    by_path = {a.image_path: a.damage_type for a in report.observations[0].assessments}
+    assert by_path == {paths[0]: "none", paths[1]: "crack"}
 
 
 @pytest.fixture
@@ -150,9 +175,26 @@ def test_api_requires_key_when_configured(api_client, monkeypatch):
     assert api_client.get("/health").status_code == 200
 
 
+def test_api_rejects_too_many_images(api_client):
+    from api.main import MAX_IMAGES_PER_CLAIM
+
+    body = dict(CLAIM, image_paths=["x.jpg"] * (MAX_IMAGES_PER_CLAIM + 1))
+    assert api_client.post("/claim", json=body).status_code == 422
+
+
 def test_api_rejects_oversized_batch(api_client):
     from api.main import MAX_BATCH_CLAIMS
 
     body = {"claims": [CLAIM] * (MAX_BATCH_CLAIMS + 1)}
     assert api_client.post("/batch", json=body).status_code == 422
     assert api_client.post("/batch", json={"claims": [CLAIM] * 2}).status_code == 200
+
+
+def test_pipeline_risk_flags_are_sorted(monkeypatch):
+    from verifyiq.v2.pipeline import V2Pipeline
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("VERIFYIQ_MODE", "demo")
+    result = V2Pipeline().process("there is a dent on the door", [], "car", "user1")
+    assert result.risk_flags == sorted(set(result.risk_flags))
+    assert len(result.risk_flags) > 1
