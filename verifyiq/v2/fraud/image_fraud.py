@@ -20,31 +20,25 @@ class ImageFraudDetector:
     def _is_screenshot(self, path: str) -> bool:
         try:
             from PIL import Image
-            img = Image.open(path)
-            w, h = img.size
-            if h == 0:
-                return False
-            aspect = w / h
-            if 1.3 < aspect < 1.8:
-                pixels = list(img.getdata())
-                if len(pixels) > 100:
-                    edge_band = set(pixels[:w])
-                    if len(edge_band) < 5:
+            with Image.open(path) as img:
+                w, h = img.size
+                if h == 0:
+                    return False
+                aspect = w / h
+                if 1.3 < aspect < 1.8 and w * h > 100:
+                    # Only the top row is inspected; materialising every pixel
+                    # of a phone photo as Python tuples costs hundreds of MB.
+                    # getcolors returns None when the row has more than 4 colours.
+                    if img.crop((0, 0, w, 1)).getcolors(maxcolors=4) is not None:
                         return True
             return False
         except Exception:
             return False
 
     def _is_photo_of_photo(self, path: str) -> bool:
-        try:
-            from PIL import Image
-            img = Image.open(path)
-            gray = img.convert("L")
-            from PIL import ImageFilter
-            gray.filter(ImageFilter.FIND_EDGES)
-            return False
-        except Exception:
-            return False
+        # Not implemented: always reports False. Kept so the result field and
+        # flag stay stable for callers.
+        return False
 
     def check(self, image_paths: list[str]) -> ImageFraudResult:
         result = ImageFraudResult()
