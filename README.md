@@ -225,13 +225,16 @@ Interactive docs at `http://localhost:8000/docs` (`/` redirects there).
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/claim` | Verify one claim. Body: `claim_text`, `claim_object`, `image_paths` (server-local paths), optional `user_id` |
-| `POST` | `/batch` | Verify a list of claims sequentially (`{"claims": [...]}`) |
+| `POST` | `/claim` | Verify one claim. Body: `claim_text`, `claim_object`, `image_paths` (up to 10 server-local paths), optional `user_id` |
+| `POST` | `/batch` | Verify up to 100 claims sequentially (`{"claims": [...]}`); larger batches get 422 |
 | `GET` | `/health` | Status, mode, vision state and per-provider health. Returns 503 in production mode when no provider is available |
 | `GET` | `/metrics` | Request/failure counters, latency stats, per-stage metrics, vision report |
 
-The API has **no authentication or rate limiting**, and it reads images from the server's
-filesystem. Do not expose it publicly without putting it behind an authenticating proxy.
+If `VERIFYIQ_API_KEY` is set, `/claim`, `/batch` and `/metrics` require a matching `X-API-Key`
+header (401 otherwise); `/health` stays open for probes. Without it the API is unauthenticated.
+Claims are processed one at a time in a worker thread (the pipeline's shared state is not
+thread-safe), and Gemini calls time out after 60 s. There is no rate limiting, and the API reads images from the server's filesystem, so do not
+expose it publicly without a key and a proxy in front of it.
 
 Example response captured during the audit (demo mode, no API key, so vision was unavailable):
 
@@ -256,6 +259,7 @@ Example response captured during the audit (demo mode, no API key, so vision was
 | `GEMINI_API_KEY` | V1 vision analyzer, V2 `GeminiProvider` | Google Gemini API key |
 | `VERIFYIQ_MODE` | V2 pipeline, API | `production` (default), `demo`, `research` |
 | `VERIFYIQ_VERSION` | API | Version string reported by `/health` |
+| `VERIFYIQ_API_KEY` | API | Optional; when set, required as the `X-API-Key` header on `/claim`, `/batch`, `/metrics` |
 | `OPENROUTER_API_KEY` | V2 `OpenRouterProvider` | Only marks the stub provider as available (see limitations) |
 | `TESSERACT_CMD` | `code/cv/text_detector.py` | Path to the Tesseract binary if it is not on `PATH` |
 
@@ -269,7 +273,7 @@ The V1 default model is `gemini-3.1-flash-lite-preview`; the V2 Gemini provider 
 
 ```bash
 pip install -e ".[dev]" -r code/requirements.txt
-pytest                      # all suites from pyproject.toml: 281 tests
+pytest                      # all suites from pyproject.toml: 292 tests
 pytest code/tests           # V1 unit tests (58)
 pytest code/v2/tests        # tests for the code/v2 copy (77)
 pytest tests                # package tests: tests/v1 (60) + tests/v2 (86, incl. audit regressions)
@@ -316,11 +320,15 @@ vision provider is configured; set `GEMINI_API_KEY` or `VERIFYIQ_MODE=demo`.
 - **Only Gemini is a working vision provider.** `OpenRouterProvider` and `LocalVLMProvider` are
   stubs whose `analyze()` returns no observations, so "multi-model consensus" in V2 effectively
   runs on one model at most.
-- **The V2 Gemini provider sends no task prompt or JSON schema**, only the (sanitized) claim text
-  and images, then looks for `per_image_assessments` in the reply. The V1 analyzer uses the full
-  prompt in `code/prompts.py`. V2 vision results with a real key were not verified in this audit.
-- **Behavioral fraud history is never loaded** by `V2Pipeline`; `BehavioralFraudDetector` only has
-  history if you call `pipeline.behavioral_fraud.load_history(csv_path)` yourself.
+- V2 Gemini results with a real API key were not verified in this audit (the provider is tested
+  against a fake client only).
+- **Behavioral fraud history is never loaded** by `V2Pipeline`. `BehavioralFraudDetector.load_history`
+  expects one row per past claim (`image_paths`, `damage_type`, …), while `dataset/user_history.csv`
+  holds per-user aggregates, so there is no matching data file to load.
+- `research` mode currently behaves exactly like `demo`.
+- Fraud heuristics are simple: metadata flags known editing apps in the EXIF `Software` tag and
+  photos taken more than 24 hours apart; screenshot detection checks for a near-uniform top row in
+  a landscape image; photo-of-a-photo detection is not implemented.
 - **The V2 package exists twice** (`verifyiq/v2/` and `code/v2/`), differing only in import paths.
   Fixes must be applied to both until one copy is removed.
 - **The `code/` directory name collides with Python's standard-library `code` module.**
@@ -330,7 +338,7 @@ vision provider is configured; set `GEMINI_API_KEY` or `VERIFYIQ_MODE=demo`.
   `conftest.py`. Renaming the directory would remove both, but touches every V1 import.
 - The package only works from a source checkout or editable install, because `verifyiq` imports
   the V1 modules from the sibling `code/` directory.
-- The API has no authentication, rate limiting or batch-size limit.
+- The API has no rate limiting, and authentication is a single shared key.
 - The dashboard shows mock data.
 - Accuracy and performance figures in `docs/`, `reports/` and `submission/` come from development
   runs and were not reproduced in this audit.
@@ -353,6 +361,16 @@ vision provider is configured; set `GEMINI_API_KEY` or `VERIFYIQ_MODE=demo`.
 | P2 | Docker build could not work: compose pointed at a missing context/Dockerfile, `.dockerignore` excluded the `README.md` the build copies, the image lacked `api/` and the vision/CV dependencies, and compose started a non-existent `verifyiq.api.app` | Rewrote `docker/Dockerfile`, fixed compose, `deploy.sh` and `deploy.ps1`; image built and both the evaluation and the API ran in a container |
 | P3 | Examples imported `code.v2` and failed outside pytest | Examples import `verifyiq.v2`; stub providers are labelled as stubs |
 | P3 | Build artifacts (`dist/`, `verifyiq.egg-info/`) committed | Removed and ignored |
+
+Second pass (2026-10-20):
+
+| Priority | Problem | Fix |
+|---|---|---|
+| P2 | Metadata fraud flagged genuine multi-photo phone claims as high risk: any EXIF `Software` value (e.g. iOS `17.4.1`) counted as editing, and any two different capture times counted as a mismatch (two iPhone photos 40 s apart scored 0.6) | Only known editing apps count; capture times must be more than 24 h apart (both copies) |
+| P2 | V2 Gemini provider sent only the claim text, no task prompt or JSON schema, and mis-aligned per-image results when an image failed to load | Sends the V1 prompt and schema with the claim quoted as untrusted input; results map by `image_id` to the images actually sent; 60 s request timeout; string booleans parsed (both copies) |
+| P2 | Screenshot check loaded every pixel into Python (670 MB, 3.7 s for a 4000x2250 photo) | Inspects only the top row (50 MB, 0.09 s) |
+| P2 | API ran the blocking pipeline inside `async` handlers (one claim stalled every request); `/batch` had no size limit; no way to require auth | Pipeline runs off the event loop (serialized); batches capped at 100 claims and claims at 10 images; optional `VERIFYIQ_API_KEY` |
+| P3 | Risk flags were returned in random order | Sorted |
 
 ---
 

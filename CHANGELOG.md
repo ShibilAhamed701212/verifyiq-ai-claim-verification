@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   responses, credentialed wildcard CORS
 - Dockerfile, docker-compose and deploy scripts that could not build or start the API
 - Examples importing `code.v2`
+- V2 metadata fraud flagging unedited phone photos (any EXIF `Software` value, any timestamp
+  difference) as high risk
+- V2 Gemini provider sending no task prompt or schema and mis-aligning per-image results
+- Screenshot check loading every pixel of each image into memory
+- API blocking the event loop while processing claims; unbounded `/batch` size; nondeterministic
+  risk-flag order
+
+### Added
+
+- Optional API key (`VERIFYIQ_API_KEY`, `X-API-Key` header) for `/claim`, `/batch`, `/metrics`
 
 ### Removed
 

@@ -3,18 +3,24 @@
 Modes (set via VERIFYIQ_MODE env var):
   production  — reject startup if no vision provider is available
   demo        — allow text-only processing with clear "no vision" disclaimer
-  research    — same as demo but with manual_review_required on all claims
+  research    — currently behaves the same as demo
+
+Authentication: if VERIFYIQ_API_KEY is set, /claim, /batch and /metrics
+require a matching X-API-Key header. /health stays open for probes.
 """
 
+import hmac
 import os
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from verifyiq.v2.observability.metrics import get_collector
 from verifyiq.v2.observability.logging import get_logger
@@ -24,15 +30,21 @@ from verifyiq.v2.vision_manager import VisionUnavailableError
 
 # ── Request / Response Models ──────────────────────────────────────────────
 
+MAX_IMAGES_PER_CLAIM = 10
+
+
 class ClaimRequest(BaseModel):
     claim_text: str
-    image_paths: list[str] = Field(default_factory=list)
+    image_paths: list[str] = Field(default_factory=list, max_length=MAX_IMAGES_PER_CLAIM)
     claim_object: str
     user_id: Optional[str] = None
 
 
+MAX_BATCH_CLAIMS = 100
+
+
 class BatchRequest(BaseModel):
-    claims: list[ClaimRequest]
+    claims: list[ClaimRequest] = Field(..., max_length=MAX_BATCH_CLAIMS)
     batch_size: int = 5
 
 
@@ -62,8 +74,16 @@ class HealthResponse(BaseModel):
 # ── Lazy Singleton ─────────────────────────────────────────────────────────
 
 _pipeline = None
+# The pipeline and its vision manager keep shared state that is not thread-safe,
+# so claims are processed one at a time off the event loop.
+_pipeline_lock = threading.Lock()
 _startup_time = time.time()
 _logger = get_logger("api.main")
+
+
+def _process_claim(pipeline, **kwargs):
+    with _pipeline_lock:
+        return pipeline.process(**kwargs)
 
 
 def get_pipeline():
@@ -72,6 +92,16 @@ def get_pipeline():
         from verifyiq.v2.pipeline import V2Pipeline
         _pipeline = V2Pipeline()
     return _pipeline
+
+
+# ── Auth ───────────────────────────────────────────────────────────────────
+
+def require_api_key(x_api_key: Optional[str] = Header(default=None)):
+    expected = os.environ.get("VERIFYIQ_API_KEY")
+    if not expected:
+        return
+    if not x_api_key or not hmac.compare_digest(x_api_key.encode(), expected.encode()):
+        raise HTTPException(status_code=401, detail={"error": "invalid_api_key"})
 
 
 # ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -123,7 +153,7 @@ async def root():
     return RedirectResponse(url="/docs")
 
 
-@app.post("/claim", response_model=ClaimResponse)
+@app.post("/claim", response_model=ClaimResponse, dependencies=[Depends(require_api_key)])
 async def verify_claim(request: ClaimRequest):
     trace_id = Tracer.generate_trace_id()
     tracer = Tracer(trace_id)
@@ -133,7 +163,10 @@ async def verify_claim(request: ClaimRequest):
     start = time.time()
     try:
         pipeline = get_pipeline()
-        decision = pipeline.process(
+        # pipeline.process is blocking (OCR, vision calls); keep the event loop free.
+        decision = await run_in_threadpool(
+            _process_claim,
+            pipeline,
             claim_text=request.claim_text,
             image_paths=request.image_paths,
             claim_object=request.claim_object,
@@ -177,7 +210,7 @@ async def verify_claim(request: ClaimRequest):
         )
 
 
-@app.post("/batch", response_model=BatchResponse)
+@app.post("/batch", response_model=BatchResponse, dependencies=[Depends(require_api_key)])
 async def batch_verify(request: BatchRequest):
     results = []
     errors = 0
@@ -237,7 +270,7 @@ async def health():
     )
 
 
-@app.get("/metrics")
+@app.get("/metrics", dependencies=[Depends(require_api_key)])
 async def metrics():
     collector = get_collector()
     snapshot = collector.snapshot()

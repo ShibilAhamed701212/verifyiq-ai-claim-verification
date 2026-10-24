@@ -201,7 +201,7 @@ class V2Pipeline:
         behavioral_result = self.behavioral_fraud.check(user_id, damage_type, image_paths)
 
         overall = max(image_result.fraud_score, metadata_result.fraud_score, behavioral_result.fraud_score)
-        all_flags = list(set(image_result.flags + metadata_result.flags + behavioral_result.flags))
+        all_flags = sorted(set(image_result.flags + metadata_result.flags + behavioral_result.flags))
 
         elapsed = (time.time() - start) * 1000
         self.metrics.record("fraud", elapsed)
@@ -338,7 +338,7 @@ class V2Pipeline:
                             evidence: EvidenceReport, confidence: ConfidenceReport,
                             critic_result: str, critic_issues: list[str]) -> V2Decision:
         decision.confidence = confidence.final_confidence
-        decision.risk_flags = list(set(decision.risk_flags + fraud.flags + conversation.risk_flags))
+        decision.risk_flags = sorted(set(decision.risk_flags + fraud.flags + conversation.risk_flags))
 
         if fraud.high_risk and "manual_review_required" not in decision.risk_flags:
             decision.risk_flags.append("manual_review_required")
@@ -360,4 +360,5 @@ class V2Pipeline:
                 decision.risk_flags.append("manual_review_required")
             decision.justification += f" | Critic: {'; '.join(critic_issues)}"
 
+        decision.risk_flags = sorted(set(decision.risk_flags))
         return decision
